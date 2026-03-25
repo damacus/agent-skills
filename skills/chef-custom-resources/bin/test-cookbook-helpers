@@ -67,6 +67,7 @@ function test_help
     assert_exit 0 $status "help exits 0"
     assert_contains "$out" "platforms" "help mentions platforms command"
     assert_contains "$out" "check-structure" "help mentions check-structure command"
+    assert_contains "$out" "check-stale-refs" "help mentions check-stale-refs command"
     assert_contains "$out" "generate-metadata" "help mentions generate-metadata command"
     assert_contains "$out" "generate-dokken" "help mentions generate-dokken command"
     assert_contains "$out" "report" "help mentions report command"
@@ -282,6 +283,89 @@ function test_check_platforms_metadata
     cleanup_fixture
 end
 
+function test_check_stale_refs_clean
+    echo "== check-stale-refs (clean) =="
+    setup_fixture
+
+    mkdir -p "$FIXTURE_DIR/test/cookbooks/test/recipes" "$FIXTURE_DIR/test/integration/default/controls"
+    write_file "$FIXTURE_DIR/metadata.rb" \
+        "name 'demo-cookbook'"
+    write_file "$FIXTURE_DIR/test/cookbooks/test/recipes/default.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "include_recipe 'test::client'"
+    write_file "$FIXTURE_DIR/test/cookbooks/test/recipes/client.rb" \
+        "# frozen_string_literal: true"
+    write_file "$FIXTURE_DIR/test/integration/default/controls/default_spec.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "describe file('/tmp/demo') do" \
+        "  it { should exist }" \
+        "end"
+
+    set -l out ($HELPER check-stale-refs "$FIXTURE_DIR" 2>&1)
+    assert_exit 0 $status "clean stale-ref check exits 0"
+    assert_contains "$out" "no stale include_recipe references found" "clean cookbook has no stale include_recipe refs"
+    assert_contains "$out" "no stale references found under test/" "clean cookbook reports success"
+    cleanup_fixture
+end
+
+function test_check_stale_refs_detects_deleted_helpers_and_recipes
+    echo "== check-stale-refs (stale refs) =="
+    setup_fixture
+
+    mkdir -p "$FIXTURE_DIR/libraries" "$FIXTURE_DIR/recipes" "$FIXTURE_DIR/test/cookbooks/test/recipes" "$FIXTURE_DIR/test/integration/default/controls"
+    write_file "$FIXTURE_DIR/metadata.rb" \
+        "name 'demo-cookbook'"
+    write_file "$FIXTURE_DIR/libraries/helpers.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "module DemoCookbook" \
+        "  module Helpers" \
+        "    def old_helper" \
+        "      '/srv/demo'" \
+        "    end" \
+        "  end" \
+        "end"
+    write_file "$FIXTURE_DIR/recipes/client.rb" \
+        "# frozen_string_literal: true"
+    write_file "$FIXTURE_DIR/test/cookbooks/test/recipes/default.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "include_recipe 'demo-cookbook::client'"
+    write_file "$FIXTURE_DIR/test/integration/default/controls/default_spec.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "require_relative '../../spec_helper'" \
+        "" \
+        "describe old_helper do" \
+        "  it { should cmp '/srv/demo' }" \
+        "end"
+
+    command git -C "$FIXTURE_DIR" init >/dev/null 2>/dev/null
+    command git -C "$FIXTURE_DIR" config user.name "Test User"
+    command git -C "$FIXTURE_DIR" config user.email "test@example.com"
+    command git -C "$FIXTURE_DIR" add .
+    command git -C "$FIXTURE_DIR" commit -m "initial" >/dev/null 2>/dev/null
+
+    write_file "$FIXTURE_DIR/libraries/helpers.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "module DemoCookbook" \
+        "  module Helpers" \
+        "  end" \
+        "end"
+    rm "$FIXTURE_DIR/recipes/client.rb"
+
+    set -l out ($HELPER check-stale-refs "$FIXTURE_DIR" 2>&1)
+    assert_exit 1 $status "stale-ref check exits 1 when stale refs exist"
+    assert_contains "$out" "old_helper" "detects deleted helper name"
+    assert_contains "$out" "stale references to deleted helper 'old_helper'" "reports stale helper refs"
+    assert_contains "$out" "include_recipe 'demo-cookbook::client'" "reports stale include_recipe line"
+    assert_contains "$out" "missing $FIXTURE_DIR/recipes/client.rb" "reports missing recipe path"
+    cleanup_fixture
+end
+
 function test_cache_idempotency
     echo "== cache idempotency =="
     # Run platforms twice — second run should use cache
@@ -314,6 +398,8 @@ test_check_structure_missing_unified
 test_check_kitchen_sync
 test_check_kitchen_mismatch
 test_check_platforms_metadata
+test_check_stale_refs_clean
+test_check_stale_refs_detects_deleted_helpers_and_recipes
 test_cache_idempotency
 
 echo ""

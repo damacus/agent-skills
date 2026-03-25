@@ -6,6 +6,7 @@
 #   platforms          Show current (non-EOL) platforms for Chef cookbooks
 #   check-platforms    Compare a cookbook's metadata.rb against current platforms
 #   check-kitchen      Verify kitchen.yml, kitchen.dokken.yml and CI matrix are in sync
+#   check-stale-refs   Detect stale helper and recipe references under test/
 #   check-structure    Validate cookbook directory structure
 #   generate-metadata  Output supports lines for metadata.rb
 #   generate-dokken    Output kitchen.dokken.yml platform entries
@@ -451,6 +452,142 @@ function cmd_check_structure
     return $exit_code
 end
 
+function cookbook_name_for_dir
+    set -l cookbook_dir $argv[1]
+    set -l metadata "$cookbook_dir/metadata.rb"
+
+    if test -f "$metadata"
+        set -l detected_name (sed -nE "s/^name[[:space:]]+['\"]([^'\"]+)['\"].*/\1/p" "$metadata" | head -1)
+        if test -n "$detected_name"
+            echo "$detected_name"
+            return 0
+        end
+    end
+
+    basename "$cookbook_dir"
+end
+
+function collect_deleted_method_names
+    set -l cookbook_dir $argv[1]
+
+    if not git -C "$cookbook_dir" rev-parse --show-toplevel >/dev/null 2>/dev/null
+        return 0
+    end
+
+    git -C "$cookbook_dir" diff --no-color --unified=0 -- . \
+        | grep -E '^-([[:space:]]*)def[[:space:]]+[A-Za-z_][A-Za-z0-9_!?=]*' \
+        | sed -E 's/^-([[:space:]]*)def[[:space:]]+([A-Za-z_][A-Za-z0-9_!?=]*).*/\2/' \
+        | sort -u
+end
+
+function recipe_path_for_reference
+    set -l cookbook_dir $argv[1]
+    set -l cookbook_name $argv[2]
+    set -l recipe_ref $argv[3]
+
+    set -l parts (string split '::' "$recipe_ref")
+    set -l namespace $parts[1]
+    set -l recipe_name default
+    if test (count $parts) -gt 1
+        set recipe_name $parts[2]
+    end
+
+    if test "$namespace" = test
+        echo "$cookbook_dir/test/cookbooks/test/recipes/$recipe_name.rb"
+        return 0
+    end
+
+    if test "$namespace" = "$cookbook_name"
+        echo "$cookbook_dir/recipes/$recipe_name.rb"
+        return 0
+    end
+
+    if test (count $parts) -eq 1
+        echo "$cookbook_dir/recipes/$namespace.rb"
+        return 0
+    end
+
+    return 1
+end
+
+function cmd_check_stale_refs
+    require_cmd git rg sed
+
+    set -l cookbook_dir "."
+    set -l explicit_methods
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+    if test (count $argv) -gt 1
+        set explicit_methods $argv[2..-1]
+    end
+
+    set -l test_dir "$cookbook_dir/test"
+    if not test -d "$test_dir"
+        die "test/ not found in $cookbook_dir"
+    end
+
+    set -l cookbook_name (cookbook_name_for_dir "$cookbook_dir")
+    set -l deleted_methods (collect_deleted_method_names "$cookbook_dir")
+    set -l method_names $explicit_methods $deleted_methods
+    if test (count $method_names) -gt 0
+        set method_names (printf '%s\n' $method_names | sort -u)
+    end
+
+    echo -e "$BOLD""Stale reference check: $cookbook_dir""$RESET"
+    echo ""
+    info "cookbook name: $cookbook_name"
+
+    set -l exit_code 0
+
+    if test (count $method_names) -gt 0
+        info "deleted helper methods detected:"
+        for method_name in $method_names
+            echo "    $method_name"
+        end
+        echo ""
+
+        for method_name in $method_names
+            set -l matches (rg -n --glob '*.rb' --glob '*.yml' --glob '*.yaml' --word-regexp --fixed-strings "$method_name" "$test_dir" 2>/dev/null)
+            if test -n "$matches"
+                warn "stale references to deleted helper '$method_name':"
+                printf '%s\n' $matches | sed 's/^/    /'
+                set exit_code 1
+            end
+        end
+    else
+        info "no deleted helper methods detected in git diff"
+    end
+
+    echo ""
+
+    set -l include_matches (rg -n --glob '*.rb' "include_recipe ['\"][^'\"]+['\"]" "$cookbook_dir/test/cookbooks" 2>/dev/null)
+    set -l stale_recipe_refs
+    if test -n "$include_matches"
+        for match_line in (printf '%s\n' $include_matches)
+            set -l recipe_ref (printf '%s\n' "$match_line" | sed -E "s/^[^:]+:[0-9]+:.*include_recipe ['\"]([^'\"]+)['\"].*/\1/")
+            set -l recipe_path (recipe_path_for_reference "$cookbook_dir" "$cookbook_name" "$recipe_ref")
+            if test -n "$recipe_path"; and not test -f "$recipe_path"
+                set -a stale_recipe_refs "$match_line -> missing $recipe_path"
+            end
+        end
+    end
+
+    if test (count $stale_recipe_refs) -gt 0
+        warn "stale include_recipe references:"
+        printf '%s\n' $stale_recipe_refs | sed 's/^/    /'
+        set exit_code 1
+    else
+        ok "no stale include_recipe references found"
+    end
+
+    if test $exit_code -eq 0
+        ok "no stale references found under test/"
+    end
+
+    return $exit_code
+end
+
 function cmd_generate_metadata
     require_cmd curl jq
 
@@ -536,6 +673,7 @@ function usage
     echo "  platforms           Show current (non-EOL) platforms for Chef cookbooks"
     echo "  check-platforms     Compare a cookbook's metadata.rb against current platforms"
     echo "  check-kitchen       Verify kitchen.yml and kitchen.dokken.yml are in sync"
+    echo "  check-stale-refs    Detect stale helper and recipe references under test/"
     echo "  check-structure     Validate cookbook directory structure"
     echo "  generate-metadata   Output supports lines for metadata.rb"
     echo "  generate-dokken     Output kitchen.dokken.yml platform entries"
@@ -565,6 +703,8 @@ function main
             cmd_check_platforms $rest
         case check-kitchen
             cmd_check_kitchen $rest
+        case check-stale-refs
+            cmd_check_stale_refs $rest
         case check-structure
             cmd_check_structure $rest
         case generate-metadata

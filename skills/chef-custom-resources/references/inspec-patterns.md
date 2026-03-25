@@ -2,14 +2,15 @@
 
 ## Table of Contents
 
-- [Profile Structure](#profile-structure)
-- [inspec.yml Profile File](#inspecyml-profile-file)
-- [Controls Structure](#controls-structure)
-- [Shared Helpers](#shared-helpers)
-- [Kitchen Configuration](#kitchen-configuration)
-- [Common InSpec Resources](#common-inspec-resources)
-- [Verification](#verification)
-- [Test Cookbook Recipes](#test-cookbook-recipes)
+- Sections
+  - [Profile Structure](#profile-structure)
+  - [inspec.yml Profile File](#inspecyml-profile-file)
+  - [Controls Structure](#controls-structure)
+  - [Shared Helpers](#shared-helpers)
+  - [Kitchen Configuration](#kitchen-configuration)
+  - [Common InSpec Resources](#common-inspec-resources)
+  - [Verification](#verification)
+  - [Test Cookbook Recipes](#test-cookbook-recipes)
 
 ## Profile Structure
 
