@@ -1,0 +1,325 @@
+#!/usr/bin/env fish
+# Tests for cookbook-helpers script
+# Run: ./test-cookbook-helpers
+
+set -g SCRIPT_DIR (status dirname)
+set -g HELPER "$SCRIPT_DIR/cookbook-helpers"
+set -g FIXTURE_DIR ""
+set -g PASS 0
+set -g FAIL 0
+
+# --- Test helpers ---
+
+function setup_fixture
+    set -g FIXTURE_DIR (mktemp -d)
+end
+
+function cleanup_fixture
+    if test -n "$FIXTURE_DIR"; and test -d "$FIXTURE_DIR"
+        rm -rf "$FIXTURE_DIR"
+    end
+end
+
+function assert_exit -a expected actual desc
+    if test "$actual" -eq "$expected"
+        echo "  ✓ $desc"
+        set -g PASS (math $PASS + 1)
+    else
+        echo "  ✗ $desc (expected exit $expected, got $actual)"
+        set -g FAIL (math $FAIL + 1)
+    end
+end
+
+function assert_contains -a output pattern desc
+    if echo "$output" | grep -q "$pattern"
+        echo "  ✓ $desc"
+        set -g PASS (math $PASS + 1)
+    else
+        echo "  ✗ $desc (pattern not found: $pattern)"
+        set -g FAIL (math $FAIL + 1)
+    end
+end
+
+function assert_not_contains -a output pattern desc
+    if not echo "$output" | grep -q "$pattern"
+        echo "  ✓ $desc"
+        set -g PASS (math $PASS + 1)
+    else
+        echo "  ✗ $desc (pattern should not be present: $pattern)"
+        set -g FAIL (math $FAIL + 1)
+    end
+end
+
+# --- Helper: write file content without heredocs ---
+
+function write_file
+    # Usage: write_file <path> <line1> <line2> ...
+    set -l path $argv[1]
+    set -l lines $argv[2..-1]
+    printf '%s\n' $lines > $path
+end
+
+# --- Tests ---
+
+function test_help
+    echo "== help =="
+    set -l out ($HELPER help 2>&1)
+    assert_exit 0 $status "help exits 0"
+    assert_contains "$out" "platforms" "help mentions platforms command"
+    assert_contains "$out" "check-structure" "help mentions check-structure command"
+    assert_contains "$out" "generate-metadata" "help mentions generate-metadata command"
+    assert_contains "$out" "generate-dokken" "help mentions generate-dokken command"
+    assert_contains "$out" "report" "help mentions report command"
+end
+
+function test_unknown_command
+    echo "== unknown command =="
+    set -l out ($HELPER nonexistent 2>&1)
+    assert_contains "$out" "unknown command" "unknown command shows error"
+end
+
+function test_platforms
+    echo "== platforms =="
+    set -l out ($HELPER platforms 2>&1)
+    assert_exit 0 $status "platforms exits 0"
+    assert_contains "$out" "endoflife.date" "platforms cites source"
+    assert_contains "$out" "almalinux" "platforms includes almalinux"
+    assert_contains "$out" "ubuntu" "platforms includes ubuntu"
+    assert_contains "$out" "debian" "platforms includes debian"
+    assert_contains "$out" "fedora" "platforms includes fedora"
+    assert_contains "$out" "opensuse" "platforms includes opensuse"
+end
+
+function test_generate_metadata
+    echo "== generate-metadata =="
+    set -l out ($HELPER generate-metadata 2>&1)
+    assert_exit 0 $status "generate-metadata exits 0"
+    assert_contains "$out" "supports 'almalinux'" "includes almalinux"
+    assert_contains "$out" "supports 'ubuntu'" "includes ubuntu"
+    assert_contains "$out" "supports 'fedora'" "includes fedora (no version constraint)"
+    assert_not_contains "$out" "supports 'fedora', '>=" "fedora has no version constraint"
+    # Ubuntu should use major.minor format (no extra .0)
+    assert_not_contains "$out" "ubuntu', '>= 22.04.0'" "ubuntu version has no extra .0"
+    assert_contains "$out" "ubuntu', '>= 22.04'" "ubuntu uses major.minor format"
+    # opensuse should also not have extra .0
+    assert_not_contains "$out" "opensuseleap', '>= 15.6.0'" "opensuse version has no extra .0"
+end
+
+function test_generate_dokken
+    echo "== generate-dokken =="
+    set -l out ($HELPER generate-dokken 2>&1)
+    assert_exit 0 $status "generate-dokken exits 0"
+    assert_contains "$out" "platforms:" "has platforms key"
+    assert_contains "$out" "dokken/" "uses dokken images"
+    assert_contains "$out" "pid_one_command:" "includes pid_one_command"
+    assert_contains "$out" "/bin/systemd" "debian/ubuntu use /bin/systemd"
+    assert_contains "$out" "/usr/lib/systemd/systemd" "RHEL family uses /usr/lib/systemd/systemd"
+end
+
+function test_check_structure_empty
+    echo "== check-structure (empty dir) =="
+    setup_fixture
+    set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
+    assert_contains "$out" "missing: metadata.rb" "detects missing metadata.rb"
+    assert_contains "$out" "missing: resources/" "detects missing resources/"
+    assert_contains "$out" "missing: spec/" "detects missing spec/"
+    assert_contains "$out" "no recipes/ directory (correct)" "no recipes is correct"
+    assert_contains "$out" "no attributes/ directory (correct)" "no attributes is correct"
+    cleanup_fixture
+end
+
+function test_check_structure_valid
+    echo "== check-structure (valid cookbook) =="
+    setup_fixture
+    # Create a minimal valid structure
+    mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default/controls" "$FIXTURE_DIR/test/cookbooks/test/recipes" "$FIXTURE_DIR/libraries"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+
+    # Create a resource with required headers
+    write_file "$FIXTURE_DIR/resources/my_resource.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "provides :my_resource" \
+        "unified_mode true" \
+        "" \
+        "property :name, String, name_property: true" \
+        "" \
+        "action :create do" \
+        "end"
+
+    write_file "$FIXTURE_DIR/spec/my_spec.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "require 'chefspec'"
+
+    write_file "$FIXTURE_DIR/libraries/helpers.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "module TestHelpers" \
+        "end"
+
+    set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
+    assert_exit 0 $status "valid cookbook exits 0"
+    assert_contains "$out" "✓ metadata.rb" "finds metadata.rb"
+    assert_contains "$out" "✓ resources/" "finds resources/"
+    assert_contains "$out" "✓ default integration test suite" "finds default suite"
+    assert_contains "$out" "all Ruby files have frozen_string_literal" "frozen_string_literal ok"
+    assert_contains "$out" "all resources have unified_mode" "unified_mode ok"
+    cleanup_fixture
+end
+
+function test_check_structure_banned_dirs
+    echo "== check-structure (banned dirs) =="
+    setup_fixture
+    mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default" "$FIXTURE_DIR/test/cookbooks/test/recipes" "$FIXTURE_DIR/recipes" "$FIXTURE_DIR/attributes"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+
+    set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
+    assert_contains "$out" "should not exist: recipes/" "detects banned recipes/"
+    assert_contains "$out" "should not exist: attributes/" "detects banned attributes/"
+    cleanup_fixture
+end
+
+function test_check_structure_missing_frozen
+    echo "== check-structure (missing frozen_string_literal) =="
+    setup_fixture
+    mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default" "$FIXTURE_DIR/test/cookbooks/test/recipes"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+
+    write_file "$FIXTURE_DIR/resources/bad.rb" \
+        "provides :bad" \
+        "unified_mode true"
+
+    set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
+    assert_contains "$out" "missing frozen_string_literal" "detects missing frozen_string_literal"
+    cleanup_fixture
+end
+
+function test_check_structure_missing_unified
+    echo "== check-structure (missing unified_mode) =="
+    setup_fixture
+    mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default" "$FIXTURE_DIR/test/cookbooks/test/recipes"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+
+    write_file "$FIXTURE_DIR/resources/bad.rb" \
+        "# frozen_string_literal: true" \
+        "" \
+        "provides :bad"
+
+    set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
+    assert_contains "$out" "missing unified_mode" "detects missing unified_mode"
+    cleanup_fixture
+end
+
+function test_check_kitchen_sync
+    echo "== check-kitchen (in sync) =="
+    setup_fixture
+
+    write_file "$FIXTURE_DIR/kitchen.yml" \
+        "platforms:" \
+        "  - name: almalinux-9" \
+        "  - name: debian-12" \
+        "  - name: ubuntu-24.04"
+
+    write_file "$FIXTURE_DIR/kitchen.dokken.yml" \
+        "platforms:" \
+        "  - name: almalinux-9" \
+        "    driver:" \
+        "      image: dokken/almalinux-9" \
+        "  - name: debian-12" \
+        "    driver:" \
+        "      image: dokken/debian-12" \
+        "  - name: ubuntu-24.04" \
+        "    driver:" \
+        "      image: dokken/ubuntu-24.04"
+
+    set -l out ($HELPER check-kitchen "$FIXTURE_DIR" 2>&1)
+    assert_exit 0 $status "synced kitchen exits 0"
+    assert_contains "$out" "platforms are in sync" "detects platforms in sync"
+    cleanup_fixture
+end
+
+function test_check_kitchen_mismatch
+    echo "== check-kitchen (mismatch) =="
+    setup_fixture
+
+    write_file "$FIXTURE_DIR/kitchen.yml" \
+        "platforms:" \
+        "  - name: almalinux-9" \
+        "  - name: debian-12" \
+        "  - name: ubuntu-24.04"
+
+    write_file "$FIXTURE_DIR/kitchen.dokken.yml" \
+        "platforms:" \
+        "  - name: almalinux-9" \
+        "    driver:" \
+        "      image: dokken/almalinux-9" \
+        "  - name: debian-11" \
+        "    driver:" \
+        "      image: dokken/debian-11"
+
+    set -l out ($HELPER check-kitchen "$FIXTURE_DIR" 2>&1)
+    assert_contains "$out" "debian-12" "detects missing platform in dokken"
+    assert_contains "$out" "ubuntu-24.04" "detects missing platform in dokken"
+    assert_contains "$out" "debian-11" "detects extra platform in dokken"
+    cleanup_fixture
+end
+
+function test_check_platforms_metadata
+    echo "== check-platforms =="
+    setup_fixture
+
+    write_file "$FIXTURE_DIR/metadata.rb" \
+        "name 'test'" \
+        "supports 'ubuntu', '>= 20.04'" \
+        "supports 'debian', '>= 12.0'" \
+        "supports 'almalinux', '>= 8.0'"
+
+    set -l out ($HELPER check-platforms "$FIXTURE_DIR" 2>&1)
+    assert_contains "$out" "ubuntu" "checks ubuntu"
+    assert_contains "$out" "debian" "checks debian"
+    assert_contains "$out" "almalinux" "checks almalinux"
+    cleanup_fixture
+end
+
+function test_cache_idempotency
+    echo "== cache idempotency =="
+    # Run platforms twice — second run should use cache
+    set -l out1 ($HELPER platforms 2>&1)
+    set -l out2 ($HELPER platforms 2>&1)
+    if test "$out1" = "$out2"
+        echo "  ✓ cached result matches fresh result"
+        set -g PASS (math $PASS + 1)
+    else
+        echo "  ✗ cached result differs from fresh result"
+        set -g FAIL (math $FAIL + 1)
+    end
+end
+
+# --- Run all tests ---
+
+echo "Running cookbook-helpers tests..."
+echo ""
+
+test_help
+test_unknown_command
+test_platforms
+test_generate_metadata
+test_generate_dokken
+test_check_structure_empty
+test_check_structure_valid
+test_check_structure_banned_dirs
+test_check_structure_missing_frozen
+test_check_structure_missing_unified
+test_check_kitchen_sync
+test_check_kitchen_mismatch
+test_check_platforms_metadata
+test_cache_idempotency
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Results: $PASS passed, $FAIL failed"
+
+if test $FAIL -gt 0
+    exit 1
+end

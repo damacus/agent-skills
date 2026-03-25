@@ -1,0 +1,586 @@
+#!/usr/bin/env fish
+# cookbook-helpers — Idempotent helpers for sous-chefs cookbook modernization
+# Usage: cookbook-helpers <command> [options]
+#
+# Commands:
+#   platforms          Show current (non-EOL) platforms for Chef cookbooks
+#   check-platforms    Compare a cookbook's metadata.rb against current platforms
+#   check-kitchen      Verify kitchen.yml, kitchen.dokken.yml and CI matrix are in sync
+#   check-structure    Validate cookbook directory structure
+#   generate-metadata  Output supports lines for metadata.rb
+#   generate-dokken    Output kitchen.dokken.yml platform entries
+#   report             Full report: platforms + structure + kitchen sync
+
+set -g TODAY (date -u +%Y-%m-%d)
+if set -q XDG_CACHE_HOME
+    set -g CACHE_DIR "$XDG_CACHE_HOME/cookbook-helpers"
+else
+    set -g CACHE_DIR "$HOME/.cache/cookbook-helpers"
+end
+set -g CACHE_TTL 86400 # 24 hours in seconds
+
+# --- Colour helpers (disabled when piped) ---
+if isatty stdout
+    set -g RED '\033[0;31m'
+    set -g GREEN '\033[0;32m'
+    set -g YELLOW '\033[0;33m'
+    set -g BLUE '\033[0;34m'
+    set -g BOLD '\033[1m'
+    set -g RESET '\033[0m'
+else
+    set -g RED ''
+    set -g GREEN ''
+    set -g YELLOW ''
+    set -g BLUE ''
+    set -g BOLD ''
+    set -g RESET ''
+end
+
+# --- Utility functions ---
+
+function die
+    echo -e "$RED""error:""$RESET"" $argv" >&2
+    exit 1
+end
+
+function info
+    echo -e "$BLUE""→""$RESET"" $argv"
+end
+
+function ok
+    echo -e "$GREEN""✓""$RESET"" $argv"
+end
+
+function warn
+    echo -e "$YELLOW""⚠""$RESET"" $argv"
+end
+
+function require_cmd
+    for cmd in $argv
+        if not type -q $cmd
+            die "required command not found: $cmd"
+        end
+    end
+end
+
+# --- Cached API fetch ---
+
+function fetch_eol
+    set -l product $argv[1]
+    set -l cache_file "$CACHE_DIR/$product.json"
+
+    mkdir -p "$CACHE_DIR"
+
+    # Use cache if fresh
+    if test -f "$cache_file"
+        set -l now (date +%s)
+        set -l file_mtime
+        if test (uname) = Darwin
+            set file_mtime (stat -f %m "$cache_file")
+        else
+            set file_mtime (stat -c %Y "$cache_file")
+        end
+        set -l age (math $now - $file_mtime)
+        if test $age -lt $CACHE_TTL
+            cat "$cache_file"
+            return
+        end
+    end
+
+    set -l url "https://endoflife.date/api/$product.json"
+    set -l data
+    set data (curl -sf "$url")
+    or die "failed to fetch $url"
+    echo "$data" > "$cache_file"
+    echo "$data"
+end
+
+# --- Platform definitions ---
+# Maps: sous-chefs name → endoflife.date product, version extraction, kitchen name pattern
+
+# Each platform entry: eol_product|metadata_name|min_cycle|kitchen_prefix|dokken_image_prefix|pid_one_command|version_format|lts_only
+# version_format: "major" (e.g. 9) or "major.minor" (e.g. 24.04)
+# lts_only: "yes" to filter to LTS releases only (Ubuntu), "no" otherwise
+set -g PLATFORMS \
+    "almalinux|almalinux|8|almalinux|dokken/almalinux|/usr/lib/systemd/systemd|major|no" \
+    "amazon-linux|amazon|2023|amazonlinux|dokken/amazonlinux|/usr/lib/systemd/systemd|major|no" \
+    "centos-stream|centos_stream|9|centos-stream|dokken/centos-stream|/usr/lib/systemd/systemd|major|no" \
+    "debian|debian|12|debian|dokken/debian|/bin/systemd|major|no" \
+    "fedora|fedora|0|fedora|dokken/fedora|/usr/lib/systemd/systemd|major|no" \
+    "opensuse|opensuseleap|15|opensuse-leap|dokken/opensuse-leap|/usr/lib/systemd/systemd|major.minor|no" \
+    "oracle-linux|oracle|8|oraclelinux|dokken/oraclelinux|/usr/lib/systemd/systemd|major|no" \
+    "rhel|redhat|8|redhat|dokken/redhat|/usr/lib/systemd/systemd|major|no" \
+    "rocky-linux|rocky|8|rockylinux|dokken/rockylinux|/usr/lib/systemd/systemd|major|no" \
+    "ubuntu|ubuntu|20.04|ubuntu|dokken/ubuntu|/bin/systemd|major.minor|yes"
+
+# --- Helper: parse platform entry fields ---
+
+function parse_platform
+    set -l entry $argv[1]
+    set -l fields (string split '|' $entry)
+    set -g _eol_product $fields[1]
+    set -g _meta_name $fields[2]
+    set -g _min_cycle $fields[3]
+    set -g _kitchen_prefix $fields[4]
+    set -g _dokken_prefix $fields[5]
+    set -g _pid_one $fields[6]
+    set -g _fmt $fields[7]
+    set -g _lts_only $fields[8]
+end
+
+# --- Core: get active (non-EOL) platform versions ---
+
+function get_active_versions
+    set -l eol_product $argv[1]
+    set -l min_cycle $argv[2]
+    set -l version_format $argv[3]
+    set -l lts_only no
+    if set -q argv[4]
+        set lts_only $argv[4]
+    end
+
+    set -l data (fetch_eol "$eol_product")
+
+    echo "$data" | jq -r --arg today "$TODAY" --arg min "$min_cycle" --arg fmt "$version_format" --arg lts "$lts_only" '
+    def to_num: split(".") | (.[0] | tonumber) * 10000 + ((.[1] // "0") | tonumber);
+    [.[] |
+      # Determine if EOL
+      select(
+        (.eol == false) or
+        ((.eol | type) == "string" and (.eol > $today))
+      ) |
+      # LTS filter (when lts_only == "yes", only include LTS releases)
+      select(
+        if $lts == "yes" then
+          (.lts == true) or ((.lts | type) == "string")
+        else
+          true
+        end
+      ) |
+      # Filter by minimum cycle
+      select(
+        if $fmt == "major.minor" then
+          (.cycle | to_num) >= ($min | to_num)
+        else
+          (.cycle | tonumber) >= ($min | tonumber)
+        end
+      ) |
+      .cycle
+    ] | sort_by(
+      if $fmt == "major.minor" then
+        . | to_num
+      else
+        . | tonumber
+      end
+    ) | .[]
+  '
+end
+
+# --- Commands ---
+
+function cmd_platforms
+    require_cmd curl jq
+
+    echo -e "$BOLD""Active (non-EOL) platforms for sous-chefs cookbooks""$RESET"
+    echo -e "Source: endoflife.date | Date: $TODAY"
+    echo ""
+
+    printf "%-20s %-15s %s\n" PLATFORM VERSIONS "METADATA NAME"
+    printf "%-20s %-15s %s\n" -------- -------- -------------
+
+    for entry in $PLATFORMS
+        parse_platform $entry
+        set -l versions (get_active_versions "$_eol_product" "$_min_cycle" "$_fmt" "$_lts_only" 2>/dev/null)
+        set -l version_str (string join ', ' $versions)
+        printf "%-20s %-15s %s\n" "$_eol_product" "$version_str" "$_meta_name"
+    end
+end
+
+function cmd_check_platforms
+    require_cmd curl jq
+
+    set -l cookbook_dir "."
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+    set -l metadata "$cookbook_dir/metadata.rb"
+
+    if not test -f "$metadata"
+        die "metadata.rb not found in $cookbook_dir"
+    end
+
+    echo -e "$BOLD""Platform check: $metadata""$RESET"
+    echo ""
+
+    set -l exit_code 0
+
+    for entry in $PLATFORMS
+        parse_platform $entry
+
+        # Get active versions from API
+        set -l active (get_active_versions "$_eol_product" "$_min_cycle" "$_fmt" "$_lts_only" 2>/dev/null)
+
+        # Check if platform is in metadata.rb
+        if grep -q "supports '$_meta_name'" "$metadata" 2>/dev/null
+            or grep -q "supports \"$_meta_name\"" "$metadata" 2>/dev/null
+
+            # Platform is listed — check for EOL concerns
+            set -l meta_line (grep "supports .*$_meta_name" "$metadata" | head -1)
+
+            if test (count $active) -eq 0
+                warn "$_meta_name — listed in metadata.rb but ALL versions are EOL"
+                set exit_code 1
+            else
+                set -l version_list (string join ', ' $active)
+                ok "$_meta_name — active versions: $version_list"
+                if test -n "$meta_line"
+                    echo "    metadata.rb: "(string trim $meta_line)
+                end
+            end
+        else
+            # Platform not listed — only mention if it has active versions and is in our default set
+            set -l min_num (string replace -a '.' '' $_min_cycle)
+            if test (count $active) -gt 0; and test "$min_num" -gt 0 2>/dev/null
+                set -l version_list (string join ', ' $active)
+                info "$_meta_name — not in metadata.rb (active versions: $version_list)"
+            end
+        end
+    end
+
+    return $exit_code
+end
+
+function cmd_check_kitchen
+    set -l cookbook_dir "."
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+    set -l kitchen_yml "$cookbook_dir/kitchen.yml"
+    set -l kitchen_dokken "$cookbook_dir/kitchen.dokken.yml"
+    set -l ci_yml "$cookbook_dir/.github/workflows/ci.yml"
+
+    echo -e "$BOLD""Kitchen sync check: $cookbook_dir""$RESET"
+    echo ""
+
+    set -l exit_code 0
+    set -l kitchen_platforms
+    set -l dokken_platforms
+
+    # Extract platform names from kitchen.yml
+    if test -f "$kitchen_yml"
+        set kitchen_platforms (awk '/^platforms:/{found=1; next} /^[^ ]/{found=0} found && /- name:/{gsub(/.*name:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print}' "$kitchen_yml" | sort)
+        info "kitchen.yml platforms:"
+        for p in $kitchen_platforms
+            echo "    $p"
+        end
+    else
+        warn "kitchen.yml not found"
+    end
+
+    echo ""
+
+    # Extract platform names from kitchen.dokken.yml
+    if test -f "$kitchen_dokken"
+        set dokken_platforms (awk '/^platforms:/{found=1; next} /^[^ ]/{found=0} found && /- name:/{gsub(/.*name:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print}' "$kitchen_dokken" | sort)
+        info "kitchen.dokken.yml platforms:"
+        for p in $dokken_platforms
+            echo "    $p"
+        end
+
+        # Compare
+        if test -f "$kitchen_yml"
+            set -l only_kitchen
+            set -l only_dokken
+
+            # Find items in kitchen but not in dokken
+            for p in $kitchen_platforms
+                if not contains -- $p $dokken_platforms
+                    set -a only_kitchen $p
+                end
+            end
+            # Find items in dokken but not in kitchen
+            for p in $dokken_platforms
+                if not contains -- $p $kitchen_platforms
+                    set -a only_dokken $p
+                end
+            end
+
+            echo ""
+            if test (count $only_kitchen) -gt 0
+                warn "In kitchen.yml but NOT in kitchen.dokken.yml:"
+                for p in $only_kitchen
+                    echo "    $p"
+                end
+                set exit_code 1
+            end
+            if test (count $only_dokken) -gt 0
+                warn "In kitchen.dokken.yml but NOT in kitchen.yml:"
+                for p in $only_dokken
+                    echo "    $p"
+                end
+                set exit_code 1
+            end
+            if test (count $only_kitchen) -eq 0; and test (count $only_dokken) -eq 0
+                ok "kitchen.yml and kitchen.dokken.yml platforms are in sync"
+            end
+        end
+    else
+        warn "kitchen.dokken.yml not found"
+    end
+
+    echo ""
+
+    # Check CI matrix
+    if test -f "$ci_yml"
+        info "CI workflow found: $ci_yml"
+        set -l ci_platforms (grep -oE '[a-z]+-[0-9]+(\.[0-9]+)?' "$ci_yml" 2>/dev/null | sort -u | grep -v 'runs-on' | grep -v 'ubuntu-latest')
+        if test (count $ci_platforms) -gt 0
+            echo "  CI platforms detected:"
+            for p in $ci_platforms
+                echo "    $p"
+            end
+        end
+    else
+        info "No CI workflow found at $ci_yml"
+    end
+
+    return $exit_code
+end
+
+function cmd_check_structure
+    set -l cookbook_dir "."
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+
+    echo -e "$BOLD""Structure check: $cookbook_dir""$RESET"
+    echo ""
+
+    set -l exit_code 0
+
+    # Required files
+    set -l required_files metadata.rb Berksfile kitchen.yml kitchen.dokken.yml chefignore README.md
+
+    for f in $required_files
+        if test -f "$cookbook_dir/$f"
+            ok "$f"
+        else
+            warn "missing: $f"
+            set exit_code 1
+        end
+    end
+
+    # Required directories
+    set -l required_dirs resources spec test/integration test/cookbooks/test/recipes
+    for d in $required_dirs
+        if test -d "$cookbook_dir/$d"
+            ok "$d/"
+        else
+            warn "missing: $d/"
+            set exit_code 1
+        end
+    end
+
+    echo ""
+
+    # Directories that should NOT exist
+    set -l banned_dirs recipes attributes
+    for d in $banned_dirs
+        if test -d "$cookbook_dir/$d"
+            warn "should not exist: $d/ (custom resource cookbooks don't use $d)"
+            set exit_code 1
+        else
+            ok "no $d/ directory (correct)"
+        end
+    end
+
+    echo ""
+
+    # Check for default test suite
+    if test -d "$cookbook_dir/test/integration/default"
+        ok "default integration test suite exists"
+    else
+        warn "missing: test/integration/default/ (every cookbook must have a default suite)"
+        set exit_code 1
+    end
+
+    # Check frozen_string_literal in Ruby files
+    set -l missing_frozen 0
+    set -l rb_dirs
+    for d in resources libraries spec
+        if test -d "$cookbook_dir/$d"
+            set -a rb_dirs "$cookbook_dir/$d"
+        end
+    end
+
+    if test (count $rb_dirs) -gt 0
+        for rbfile in (find $rb_dirs -name '*.rb' 2>/dev/null)
+            if not head -1 "$rbfile" | grep -q 'frozen_string_literal: true'
+                warn "missing frozen_string_literal: $rbfile"
+                set missing_frozen 1
+                set exit_code 1
+            end
+        end
+    end
+
+    if test $missing_frozen -eq 0
+        ok "all Ruby files have frozen_string_literal: true"
+    end
+
+    # Check unified_mode in resources
+    set -l missing_unified 0
+    if test -d "$cookbook_dir/resources"
+        for rbfile in (find "$cookbook_dir/resources" -maxdepth 1 -name '*.rb' 2>/dev/null)
+            set -l bname (basename "$rbfile")
+            # Skip partials
+            if string match -q '_*' $bname
+                continue
+            end
+            if not grep -q 'unified_mode true' "$rbfile"
+                warn "missing unified_mode true: $rbfile"
+                set missing_unified 1
+                set exit_code 1
+            end
+        end
+    end
+
+    if test $missing_unified -eq 0
+        ok "all resources have unified_mode true"
+    end
+
+    return $exit_code
+end
+
+function cmd_generate_metadata
+    require_cmd curl jq
+
+    echo -e "$BOLD""# Generated supports lines for metadata.rb""$RESET"
+    echo "# Source: endoflife.date | Date: $TODAY"
+    echo ""
+
+    for entry in $PLATFORMS
+        parse_platform $entry
+
+        set -l versions (get_active_versions "$_eol_product" "$_min_cycle" "$_fmt" "$_lts_only" 2>/dev/null)
+        if test (count $versions) -eq 0
+            continue
+        end
+
+        # Get minimum active version for the constraint
+        set -l min_version $versions[1]
+
+        if test "$_meta_name" = fedora
+            echo "supports 'fedora'"
+        else if test "$_fmt" = "major.minor"
+            echo "supports '$_meta_name', '>= $min_version'"
+        else
+            echo "supports '$_meta_name', '>= $min_version.0'"
+        end
+    end
+end
+
+function cmd_generate_dokken
+    require_cmd curl jq
+
+    echo -e "$BOLD""# Generated kitchen.dokken.yml platform entries""$RESET"
+    echo "# Source: endoflife.date | Date: $TODAY"
+    echo ""
+    echo "platforms:"
+
+    for entry in $PLATFORMS
+        parse_platform $entry
+
+        set -l versions (get_active_versions "$_eol_product" "$_min_cycle" "$_fmt" "$_lts_only" 2>/dev/null)
+        if test (count $versions) -eq 0
+            continue
+        end
+
+        for ver in $versions
+            set -l platform_name "$_kitchen_prefix-$ver"
+            set -l image "$_dokken_prefix-$ver"
+            echo "  - name: $platform_name"
+            echo "    driver:"
+            echo "      image: $image"
+            echo "      pid_one_command: $_pid_one"
+        end
+    end
+end
+
+function cmd_report
+    set -l cookbook_dir "."
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+
+    cmd_platforms
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    cmd_check_structure "$cookbook_dir"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    cmd_check_platforms "$cookbook_dir"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    cmd_check_kitchen "$cookbook_dir"
+end
+
+# --- Main ---
+
+function usage
+    echo "Usage: cookbook-helpers <command> [cookbook-dir]"
+    echo ""
+    echo "Commands:"
+    echo "  platforms           Show current (non-EOL) platforms for Chef cookbooks"
+    echo "  check-platforms     Compare a cookbook's metadata.rb against current platforms"
+    echo "  check-kitchen       Verify kitchen.yml and kitchen.dokken.yml are in sync"
+    echo "  check-structure     Validate cookbook directory structure"
+    echo "  generate-metadata   Output supports lines for metadata.rb"
+    echo "  generate-dokken     Output kitchen.dokken.yml platform entries"
+    echo "  report              Full report: platforms + structure + kitchen sync"
+    echo ""
+    echo "Options:"
+    echo "  [cookbook-dir]       Path to cookbook (default: current directory)"
+    echo ""
+    echo "Environment:"
+    echo "  CACHE_DIR           Override cache directory (default: ~/.cache/cookbook-helpers)"
+end
+
+function main
+    set -l cmd ""
+    if set -q argv[1]
+        set cmd $argv[1]
+    end
+    set -l rest
+    if test (count $argv) -gt 1
+        set rest $argv[2..-1]
+    end
+
+    switch "$cmd"
+        case platforms
+            cmd_platforms $rest
+        case check-platforms
+            cmd_check_platforms $rest
+        case check-kitchen
+            cmd_check_kitchen $rest
+        case check-structure
+            cmd_check_structure $rest
+        case generate-metadata
+            cmd_generate_metadata $rest
+        case generate-dokken
+            cmd_generate_dokken $rest
+        case report
+            cmd_report $rest
+        case -h --help help
+            usage
+        case ''
+            usage
+            exit 1
+        case '*'
+            die "unknown command: $cmd (try 'cookbook-helpers help')"
+    end
+end
+
+main $argv

@@ -1,0 +1,121 @@
+{
+  "version": 3,
+  "skills": {
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "c2f31172b6f256272305a5e6e7228b258446899f",
+      "installedAt": "2026-01-31T22:49:59.930Z",
+      "updatedAt": "2026-01-31T22:49:59.930Z"
+    },
+    "gmail": {
+      "source": "odyssey4me/agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/odyssey4me/agent-skills.git",
+      "skillPath": "skills/gmail/SKILL.md",
+      "skillFolderHash": "2efa98ce70141a564366df68df026639fbfd5f08",
+      "installedAt": "2026-02-10T21:37:33.751Z",
+      "updatedAt": "2026-02-10T21:37:33.751Z"
+    },
+    "paperless-search": {
+      "source": "nicolaischmid/agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/nicolaischmid/agent-skills.git",
+      "skillPath": "skills/paperless-search/SKILL.md",
+      "skillFolderHash": "aac29a3d2b2a5fa8e0008d3e876781d9e0806e3e",
+      "installedAt": "2026-02-10T21:37:59.421Z",
+      "updatedAt": "2026-02-10T21:37:59.421Z"
+    },
+    "freeagent-api": {
+      "source": "markpitt/claude-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/markpitt/claude-skills.git",
+      "skillPath": "skills/freeagent-api/SKILL.md",
+      "skillFolderHash": "f3239c0be0ae53e293a5ac848d47186073a123cc",
+      "installedAt": "2026-02-10T21:38:13.658Z",
+      "updatedAt": "2026-02-10T21:38:13.658Z"
+    },
+    "security-reviewer": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/jeffallan/claude-skills.git",
+      "skillPath": "skills/security-reviewer/SKILL.md",
+      "skillFolderHash": "b5ebf01b52c4adeecfb497eaac7b4d295842757f",
+      "installedAt": "2026-02-20T14:32:12.886Z",
+      "updatedAt": "2026-02-20T14:32:12.886Z"
+    },
+    "playwright-cli": {
+      "source": "microsoft/playwright-cli",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/microsoft/playwright-cli.git",
+      "skillPath": "skills/playwright-cli/SKILL.md",
+      "skillFolderHash": "a5a8823e403adc13b2488aae9968d6d92adbd2d7",
+      "installedAt": "2026-02-26T14:25:09.294Z",
+      "updatedAt": "2026-02-26T14:25:09.294Z"
+    },
+    "web-quality-audit": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
+      "skillPath": "skills/web-quality-audit/SKILL.md",
+      "skillFolderHash": "6a9eb661cd83a05c16e5ef41bbc4e23d4b0692f3",
+      "installedAt": "2026-03-04T00:11:51.418Z",
+      "updatedAt": "2026-03-04T00:11:51.418Z"
+    },
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
+      "skillPath": "skills/accessibility/SKILL.md",
+      "skillFolderHash": "8a47ac5ab4145d0eb7b261a7ecb085214cf4248a",
+      "installedAt": "2026-03-04T00:12:32.983Z",
+      "updatedAt": "2026-03-04T00:12:32.983Z"
+    },
+    "core-web-vitals": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
+      "skillPath": "skills/core-web-vitals/SKILL.md",
+      "skillFolderHash": "6c8ba65254a5228e366901005befb9df7f1bbd96",
+      "installedAt": "2026-03-04T00:13:03.141Z",
+      "updatedAt": "2026-03-04T00:14:57.641Z"
+    },
+    "best-practices": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
+      "skillPath": "skills/best-practices/SKILL.md",
+      "skillFolderHash": "342875cc524913c55d9aff098d5569ed1fac820a",
+      "installedAt": "2026-03-04T00:13:59.738Z",
+      "updatedAt": "2026-03-04T00:13:59.738Z"
+    },
+    "doc-coauthoring": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/doc-coauthoring/SKILL.md",
+      "skillFolderHash": "d9df960e61fe2bafe9183e37de6f9f6b73b74087",
+      "pluginName": "example-skills",
+      "installedAt": "2026-03-09T10:48:43.470Z",
+      "updatedAt": "2026-03-09T10:48:43.470Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "cline",
+    "codex",
+    "cursor",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-cli",
+    "opencode",
+    "claude-code",
+    "windsurf",
+    "antigravity"
+  ]
+}

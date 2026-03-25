@@ -1,0 +1,33 @@
+{
+  "vendors": [
+    {
+      "name": "Anthropic",
+      "freeagent_description": "Anthropic",
+      "gmail_query": "from:anthropic.com subject:\"Your receipt from Anthropic\"",
+      "paperless_tags": ["anthropic", "AI"],
+      "freeagent_category": "/v2/categories/269"
+    },
+    {
+      "name": "Windsurf",
+      "freeagent_description": "Codeium",
+      "gmail_query": "from:codeium.com OR from:exafunction.com",
+      "paperless_tags": ["exafunction", "AI"],
+      "freeagent_category": "/v2/categories/269"
+    },
+    {
+      "name": "OpenAI",
+      "freeagent_description": "OpenAI",
+      "gmail_query": "from:openai.com",
+      "paperless_tags": ["openai", "AI"],
+      "freeagent_category": "/v2/categories/269"
+    },
+    {
+      "name": "Maslins",
+      "freeagent_description": "Maslins",
+      "gmail_query": "from:maslins.co.uk",
+      "paperless_tags": ["accounting"],
+      "freeagent_category": "/v2/categories/292",
+      "freeagent_correspondent": "Daniel Webb"
+    }
+  ]
+}
