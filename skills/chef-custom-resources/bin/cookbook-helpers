@@ -7,6 +7,7 @@
 #   check-platforms    Compare a cookbook's metadata.rb against current platforms
 #   check-kitchen      Verify kitchen.yml, kitchen.dokken.yml and CI matrix are in sync
 #   check-stale-refs   Detect stale helper and recipe references under test/
+#   ci-logs            Fetch raw GitHub Actions job logs for failed or in-progress jobs
 #   check-structure    Validate cookbook directory structure
 #   generate-metadata  Output supports lines for metadata.rb
 #   generate-dokken    Output kitchen.dokken.yml platform entries
@@ -62,6 +63,44 @@ function require_cmd
             die "required command not found: $cmd"
         end
     end
+end
+
+function repo_from_run_url
+    set -l url $argv[1]
+    set -l match (string match -r 'github\.com/([^/]+/[^/]+)/actions/runs/[0-9]+' -- $url)
+    if test (count $match) -ge 2
+        echo $match[2]
+    end
+end
+
+function run_id_from_input
+    set -l value $argv[1]
+    if string match -rq '^[0-9]+$' -- $value
+        echo $value
+        return 0
+    end
+
+    set -l match (string match -r 'actions/runs/([0-9]+)' -- $value)
+    if test (count $match) -ge 2
+        echo $match[2]
+        return 0
+    end
+
+    return 1
+end
+
+function current_repo_name
+    set -l repo_root (git rev-parse --show-toplevel 2>/dev/null)
+    if test -n "$repo_root"
+        basename "$repo_root"
+        return 0
+    end
+
+    basename (pwd)
+end
+
+function default_repo
+    echo "sous-chefs/"(current_repo_name)
 end
 
 # --- Cached API fetch ---
@@ -664,6 +703,102 @@ function cmd_report
     cmd_check_kitchen "$cookbook_dir"
 end
 
+function cmd_ci_logs
+    require_cmd gh jq
+
+    if test (count $argv) -eq 0
+        echo "Usage: cookbook-helpers ci-logs <run-url-or-id> [--repo owner/name] [--job <job-id-or-name>] [--all]"
+        return 1
+    end
+
+    set -l run_arg ""
+    set -l repo ""
+    set -l job_selector ""
+    set -l include_all no
+    set -l i 1
+
+    while test $i -le (count $argv)
+        set -l arg $argv[$i]
+        switch $arg
+            case --repo
+                set i (math $i + 1)
+                test $i -le (count $argv); or die "--repo requires a value"
+                set repo $argv[$i]
+            case --job
+                set i (math $i + 1)
+                test $i -le (count $argv); or die "--job requires a value"
+                set job_selector $argv[$i]
+            case --all
+                set include_all yes
+            case --help -h help
+                echo "Usage: cookbook-helpers ci-logs <run-url-or-id> [--repo owner/name] [--job <job-id-or-name>] [--all]"
+                echo "Defaults to sous-chefs/<cwd repo> when --repo is omitted."
+                return 0
+            case '*'
+                if test -z "$run_arg"
+                    set run_arg $arg
+                else
+                    die "unexpected argument: $arg"
+                end
+        end
+        set i (math $i + 1)
+    end
+
+    test -n "$run_arg"; or die "missing run URL or run ID"
+
+    set -l run_id (run_id_from_input "$run_arg")
+    or die "could not parse run ID from: $run_arg"
+
+    if test -z "$repo"
+        set repo (repo_from_run_url "$run_arg")
+    end
+
+    if test -z "$repo"
+        set repo (default_repo)
+    end
+
+    test -n "$repo"; or die "could not determine repository; pass --repo owner/name"
+
+    set -l jobs_json (gh api "repos/$repo/actions/runs/$run_id/jobs?per_page=100")
+    or die "failed to fetch jobs for run $run_id in $repo"
+
+    set -l jq_filter '.jobs'
+    if test "$include_all" = no
+        set jq_filter "$jq_filter | map(select(.conclusion == \"failure\" or .status == \"in_progress\"))"
+    end
+
+    if test -n "$job_selector"
+        if string match -rq '^[0-9]+$' -- $job_selector
+            set jq_filter "$jq_filter | map(select((.id | tostring) == \"$job_selector\"))"
+        else
+            set jq_filter "$jq_filter | map(select(.name == \"$job_selector\" or (.name | contains(\"$job_selector\"))))"
+        end
+    end
+
+    set -l selected_jobs (echo "$jobs_json" | jq -c "$jq_filter | .[]")
+
+    if test (count $selected_jobs) -eq 0
+        echo "No matching jobs found for run $run_id in $repo." >&2
+        echo "" >&2
+        echo "Available jobs:" >&2
+        echo "$jobs_json" | jq -r '.jobs[] | "  \(.id)\t\(.status)\t\(.conclusion // "-")\t\(.name)"' >&2
+        return 1
+    end
+
+    for job_json in $selected_jobs
+        set -l job_id (echo "$job_json" | jq -r '.id')
+        set -l job_name (echo "$job_json" | jq -r '.name')
+        set -l job_status (echo "$job_json" | jq -r '.status')
+        set -l job_conclusion (echo "$job_json" | jq -r '.conclusion // "-"')
+
+        echo "===== job $job_id :: $job_name ====="
+        echo "status=$job_status conclusion=$job_conclusion"
+        gh api "repos/$repo/actions/jobs/$job_id/logs"
+        or die "failed to fetch logs for job $job_id"
+        echo ""
+    end
+end
+
 # --- Main ---
 
 function usage
@@ -674,6 +809,7 @@ function usage
     echo "  check-platforms     Compare a cookbook's metadata.rb against current platforms"
     echo "  check-kitchen       Verify kitchen.yml and kitchen.dokken.yml are in sync"
     echo "  check-stale-refs    Detect stale helper and recipe references under test/"
+    echo "  ci-logs             Fetch raw GitHub Actions job logs for failed or active jobs"
     echo "  check-structure     Validate cookbook directory structure"
     echo "  generate-metadata   Output supports lines for metadata.rb"
     echo "  generate-dokken     Output kitchen.dokken.yml platform entries"
@@ -705,6 +841,8 @@ function main
             cmd_check_kitchen $rest
         case check-stale-refs
             cmd_check_stale_refs $rest
+        case ci-logs
+            cmd_ci_logs $rest
         case check-structure
             cmd_check_structure $rest
         case generate-metadata

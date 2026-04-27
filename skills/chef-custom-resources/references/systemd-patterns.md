@@ -2,12 +2,24 @@
 
 ## Table of Contents
 
-- [systemd_unit Resource](#systemd_unit-resource)
-- [Unit File as Hash](#unit-file-as-hash)
-- [Unit File as String](#unit-file-as-string)
-- [Complete Service Resource Example](#complete-service-resource-example)
-- [Removing Legacy Init Systems](#removing-legacy-init-systems)
-- [InSpec Verification](#inspec-verification)
+- [Systemd Patterns](#systemd-patterns)
+	- [Table of Contents](#table-of-contents)
+	- [systemd\_unit Resource](#systemd_unit-resource)
+		- [Actions](#actions)
+		- [Properties](#properties)
+	- [Unit File as Hash](#unit-file-as-hash)
+		- [Repeatable options (arrays)](#repeatable-options-arrays)
+	- [Unit File as String](#unit-file-as-string)
+	- [Complete Service Resource Example](#complete-service-resource-example)
+	- [Service Resource Pattern (Application-Managed Unit Files)](#service-resource-pattern-application-managed-unit-files)
+		- [When to use this pattern](#when-to-use-this-pattern)
+		- [Example: Splunk-style service management](#example-splunk-style-service-management)
+		- [Key points](#key-points)
+	- [Removing Legacy Init Systems](#removing-legacy-init-systems)
+		- [Files to delete](#files-to-delete)
+		- [Code to remove](#code-to-remove)
+		- [Verification](#verification)
+	- [InSpec Verification](#inspec-verification)
 
 ## systemd_unit Resource
 
@@ -16,27 +28,27 @@ This is the **only** supported init system — no sysvinit, no upstart.
 
 ### Actions
 
-| Action              | Description                                |
-|---------------------|--------------------------------------------|
-| `:create`           | Create the unit file                       |
-| `:delete`           | Delete the unit file                       |
-| `:enable`           | Enable the unit to start on boot           |
-| `:disable`          | Disable the unit from starting on boot     |
-| `:start`            | Start the unit                             |
-| `:stop`             | Stop the unit                              |
-| `:restart`          | Restart the unit                           |
-| `:reload`           | Reload the unit configuration              |
-| `:reload_or_restart`| Reload if supported, otherwise restart     |
+| Action               | Description                            |
+|----------------------|----------------------------------------|
+| `:create`            | Create the unit file                   |
+| `:delete`            | Delete the unit file                   |
+| `:enable`            | Enable the unit to start on boot       |
+| `:disable`           | Disable the unit from starting on boot |
+| `:start`             | Start the unit                         |
+| `:stop`              | Stop the unit                          |
+| `:restart`           | Restart the unit                       |
+| `:reload`            | Reload the unit configuration          |
+| `:reload_or_restart` | Reload if supported, otherwise restart |
 
 ### Properties
 
-| Property          | Type          | Default    | Description                    |
-|-------------------|---------------|------------|--------------------------------|
-| `unit_name`       | String        | name       | Name of the unit file          |
-| `content`         | String, Hash  | required   | Unit file content              |
-| `triggers_reload` | Boolean       | true       | Daemon-reload on create/delete |
-| `verify`          | Boolean       | true       | Verify unit before install     |
-| `user`            | String        | nil        | Run under user scope           |
+| Property          | Type         | Default  | Description                    |
+|-------------------|--------------|----------|--------------------------------|
+| `unit_name`       | String       | name     | Name of the unit file          |
+| `content`         | String, Hash | required | Unit file content              |
+| `triggers_reload` | Boolean      | true     | Daemon-reload on create/delete |
+| `verify`          | Boolean      | true     | Verify unit before install     |
+| `user`            | String       | nil      | Run under user scope           |
 
 ## Unit File as Hash
 
@@ -200,6 +212,64 @@ action :delete do
   end
 end
 ```
+
+## Service Resource Pattern (Application-Managed Unit Files)
+
+When an application creates its own systemd unit file (e.g., via a `boot-start` or
+`install` command), use the `service` resource instead of `systemd_unit`. Chef
+auto-detects the systemd provider on supported platforms — no explicit `provider`
+is needed.
+
+### When to use this pattern
+
+- The application ships a command that generates its own `.service` file
+- You only need to start/stop/enable/disable the service
+- You don't need to customize the unit file content
+
+### Example: Splunk-style service management
+
+```ruby
+# resources/splunk_service.rb
+
+action :start do
+  # Application creates its own unit file
+  execute 'splunk enable boot-start' do
+    command boot_start_command
+    creates "/etc/systemd/system/#{new_resource.service_name}.service"
+  end
+
+  # Symlink for convenience (Splunk creates Splunkd.service,
+  # but we want /etc/systemd/system/splunk.service)
+  link '/etc/systemd/system/splunk.service' do
+    to "/etc/systemd/system/#{new_resource.service_name}.service"
+  end
+
+  # Chef auto-detects systemd — no provider needed
+  service 'splunk' do
+    service_name new_resource.service_name
+    action [:enable, :start]
+    supports status: true, restart: true
+  end
+end
+
+action :stop do
+  service 'splunk' do
+    service_name new_resource.service_name
+    action [:stop, :disable]
+    supports status: true, restart: true
+  end
+end
+```
+
+### Key points
+
+- **No `provider Chef::Provider::Service::Systemd`** — Chef auto-detects systemd on
+  supported platforms. Explicit provider specs are redundant and were removed in
+  Chef 17+.
+- **`supports`** — Always declare `status: true, restart: true` so Chef can properly
+  query service state and perform in-place restarts.
+- **`creates` guard** — Use `creates` on the `execute` resource that generates the
+  unit file, so it only runs when the file doesn't exist.
 
 ## Removing Legacy Init Systems
 

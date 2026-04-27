@@ -68,6 +68,7 @@ function test_help
     assert_contains "$out" "platforms" "help mentions platforms command"
     assert_contains "$out" "check-structure" "help mentions check-structure command"
     assert_contains "$out" "check-stale-refs" "help mentions check-stale-refs command"
+    assert_contains "$out" "ci-logs" "help mentions ci-logs command"
     assert_contains "$out" "generate-metadata" "help mentions generate-metadata command"
     assert_contains "$out" "generate-dokken" "help mentions generate-dokken command"
     assert_contains "$out" "report" "help mentions report command"

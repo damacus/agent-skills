@@ -81,6 +81,17 @@ Verify all supported platforms are current using [endoflife.date](https://endofl
 2. Remove EOL platforms (e.g. Ubuntu 20.04, Debian 11, openSUSE Leap 15.5)
 3. Add newly current platforms if vendor supports them (cross-reference with `LIMITATIONS.md`)
 4. Update platform lists in **all** kitchen files — `kitchen.yml`, `kitchen.dokken.yml`, and CI matrix in `.github/workflows/ci.yml`
+5. **CI vs Local Strategy**:
+    - **Default**: Use `kitchen.dokken.yml` (Docker) for both CI and local testing.
+    - **Hypervisor Fallback**: If the cookbook requires a hypervisor (Vagrant) for local testing, CI must pivot to the `exec` driver in `kitchen.exec.yml` on `ubuntu-latest`.
+    - **Cleanup**: If Dokken is not viable for the cookbook's requirements, remove `kitchen.dokken.yml` entirely to prevent drift.
+
+> **Preserve existing support unless explicitly changed.** For an existing cookbook,
+> platform modernization must preserve all currently supported, non-EOL platforms
+> unless Phase 1 evidence shows they are no longer supportable or the user
+> explicitly approves removing them. Aligning CI with another cookbook means
+> matching workflow structure, not copying that cookbook's platform matrix or
+> silently narrowing support.
 
 > **Keep platform lists in sync.** Changes to platforms in any kitchen file must be
 > reflected in all others. Stale entries cause CI failures or silent test gaps.
@@ -92,6 +103,36 @@ Verify all supported platforms are current using [endoflife.date](https://endofl
 - [ ] No EOL platforms remain in `metadata.rb`
 - [ ] `kitchen.yml`, `kitchen.dokken.yml`, and CI matrix list the same platforms
 - [ ] Platform changes are consistent with `LIMITATIONS.md`
+- [ ] CI driver strategy (Dokken vs Exec) aligns with local hypervisor requirements
+
+### Phase 2c: sous-chefs CI Baseline
+
+Normalize GitHub Actions before deep migration work. This avoids red PRs caused by org workflow
+contract drift rather than cookbook code.
+
+1. Use `sous-chefs/.github/.github/actions/install-workstation@6.0.0` to install Cinc
+   Workstation in CI
+2. Do **not** configure `chefworkstation` in Kitchen YAML; use `chef` or leave the provisioner
+   install setting blank, depending on the existing cookbook pattern
+3. Pin sous-chefs reusable workflows to `@6.0.0` unless the user explicitly asks for `main`
+4. For `release-cookbook.yml@6.0.0`, pass all required secrets:
+   `token`, `supermarket_user`, `supermarket_key`, `slack_bot_token`, and `slack_channel_id`
+5. If reusable workflow validation fails with missing permissions, add the caller-level permissions
+   requested by the nested workflow, especially `pull-requests: write` for prevent-file-change
+6. Keep lint configuration current: yamllint enabled, markdownlint enabled, markdown lists use `*`,
+   `no-multiple-blanks.maximum: 2`, and ignore `.github/copilot-instructions.md` plus `.windsurf/**`
+
+**Done when:** CI workflow files call the current sous-chefs actions/workflows correctly and validate
+without missing secret, permission, yamllint, or markdownlint failures.
+
+**Report before moving on:**
+
+- [ ] Cinc Workstation is installed via `install-workstation@6.0.0`
+- [ ] Kitchen YAML does not use `chefworkstation`
+- [ ] Reusable workflows are pinned to `@6.0.0`
+- [ ] Release workflow passes all required secrets
+- [ ] Caller workflow permissions satisfy nested workflow requirements
+- [ ] yamllint and markdownlint configuration matches sous-chefs conventions
 
 ### Phase 3: Build / Migrate Resources
 
@@ -200,12 +241,19 @@ Read [references/documentation-patterns.md](references/documentation-patterns.md
 
 Write `documentation/<cookbook_name>_<resource_name>.md` for every custom resource.
 
-**Done when:** Every resource in `resources/` has a corresponding doc file in `documentation/`.
+For attribute-to-resource migrations, also write `migration.md` at the cookbook root and link it
+from `README.md`. The migration guide must explain the breaking change from node attributes and
+recipes to resource properties and test cookbook examples.
+
+**Done when:** Every resource in `resources/` has a corresponding doc file in `documentation/`, and
+full migrations include a linked `migration.md`.
 
 **Report before moving on:**
 
 - [ ] Every resource has documentation
 - [ ] Documentation filenames match the expected pattern
+- [ ] Full migrations include `migration.md`
+- [ ] `README.md` links to `migration.md`
 
 ### Phase 7: Propose Pull Request
 
@@ -221,17 +269,25 @@ ls -R
 
 Use that audit to confirm the directory layout still matches the intended scope. In Full Migration mode, explicitly confirm that `recipes/` and `attributes/` are gone. Also confirm that the outputs of `cookstyle`, `chef exec rspec`, and `kitchen test` have already been shown in the current session.
 
+For full migrations, the PR title and commit subject must use a breaking conventional commit such
+as `feat!: migrate <cookbook> to custom resources`. Do not use `refactor:` for attribute-to-resource
+migrations because release-please must create a major version bump.
+
 If the user confirms, invoke the `@github-pr` skill to create the PR.
 
 **Done when:** PR is opened with passing CI.
 
 ## Rules
 
+- **CI triage for active runs**: When diagnosing a GitHub Actions failure that is still `in_progress`, do not rely on `gh run view ... --log`; it often withholds logs until the run completes. Use `bin/gh-ci-job-logs <run-url-or-id>` to fetch raw job logs via `gh api` instead
+- **Check Kitchen instance normalization**: If CI says `No instances for regex ...`, compare the workflow-generated instance names with `kitchen list`. Ubuntu instances are commonly normalized from `ubuntu-22.04` / `ubuntu-24.04` to `ubuntu-2204` / `ubuntu-2404`
 - **TDD**: Write failing test first, then implement
 - **Scope confirmation before edits**: Never modify files before the user explicitly confirms Full Migration or Incremental Modernization
 - **Verify after every phase**: Run `cookstyle` and `chef exec rspec` after Phase 4. Run `kitchen test` after Phase 5. Never skip verification.
+- **Local Chef workstation setup**: If local commands cannot find Chef/Cinc binaries, add `.mise.toml` with `[env]` and `_.path = "/opt/chef-workstation/bin"`, then run `mise trust`
 - **Report every "Done when" item**: At the end of each phase, output a markdown checklist showing each criterion and how it was verified in-session
 - **Escalate complexity instead of drifting**: If following the declared scope would be too risky, too broad, or too expensive, ask the user for guidance instead of quietly reducing the scope
+- **No silent support narrowing**: For existing cookbooks, do not remove a currently supported non-EOL platform from `metadata.rb`, Kitchen, CI, docs, or helper logic unless Phase 1 evidence shows it is no longer supportable or the user explicitly approves dropping it
 - **systemd only**: No sysvinit or upstart — remove if present
 - **`unified_mode true`** on every resource
 - **`provides :<resource_name>`** on every resource
@@ -242,10 +298,13 @@ If the user confirms, invoke the `@github-pr` skill to create the PR.
 - **Delete undoes create**: A resource's `:delete` (or `:remove`) action must remove **every** artifact that `:create` (or `:install`/`:start`) produces — files, directories, symlinks, systemd units, templates, and packages. Shared resources (users, groups) that other instances may depend on should not be removed
 - **No `attributes/` directory**: Custom resource cookbooks use resource properties, not node attributes. During migration, delete `attributes/` entirely and convert attribute-driven logic to resource properties
 - **No `recipes/` directory**: Custom resource cookbooks provide resources, not recipes. During migration, delete `recipes/` and move usage into test cookbook recipes (`test/cookbooks/test/recipes/`)
-- **CI aligns with kitchen.yml**: The `.github/workflows/ci.yml` integration matrix must match every suite × platform combination defined in `kitchen.yml`. When suites or platforms change in `kitchen.yml`, update the CI matrix to match
-- **Platform lists in sync**: `kitchen.yml`, `kitchen.dokken.yml`, and `.github/workflows/ci.yml` must all list the same platforms. When you change one, update all three
+- **CI aligns with kitchen.yml**: The `.github/workflows/ci.yml` integration matrix must match every suite × platform combination defined in `kitchen.yml` (or `kitchen.exec.yml` for CI). When suites or platforms change, update the CI matrix to match.
+- **CI vs Local Split**: When a hypervisor (Vagrant) is required for local testing, maintain `kitchen.yml` for local use and `kitchen.exec.yml` for CI. Use `ubuntu-latest` for CI.
+- **Runner Optimization**: In `kitchen.exec.yml`, always set `chef_omnibus_install: false` to use the pre-installed Chef on GitHub runners and avoid `sudo` password prompts. Ensure `sudo: true` is set for resources managing system services.
+- **Platform lists in sync**: `kitchen.yml`, `kitchen.dokken.yml` (if used), and `.github/workflows/ci.yml` must all list the same platforms. When you change one, update all three
 - **Run cookstyle early and often**: Run `cookstyle -a` after every batch of resource changes. It catches deprecations (e.g. `yum_repository :delete` → `:remove`) that are easy to miss
 - **No `supports` in InSpec `inspec.yml`**: The `supports: platform-family:` filter silently skips profiles in Dokken containers. Omit it entirely
 - **No lazy shell_out at compile time**: If a resource action needs `shell_out`, wrap it in a `lazy` block or move it inside a sub-resource's property. ChefSpec will reject compile-time `shell_out` calls
 - **Diplomat resources**: Resources that depend on external gems (e.g. `diplomat`) should NOT use `step_into` in ChefSpec — test resource declaration only, not inner convergence
 - **No PR before evidence**: Never invoke `@github-pr` until `cookstyle`, `chef exec rspec`, `kitchen test`, and the final structural audit have all been shown in the current session
+- **Breaking migration PRs use `feat!`**: Attribute-to-resource migrations remove public node attributes and recipes, so they require a breaking conventional commit/PR title to force a major release

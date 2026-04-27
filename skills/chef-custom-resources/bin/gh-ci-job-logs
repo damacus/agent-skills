@@ -1,0 +1,5 @@
+#!/usr/bin/env fish
+# gh-ci-job-logs — compatibility wrapper for cookbook-helpers ci-logs
+
+set -l script_dir (status dirname)
+exec "$script_dir/cookbook-helpers" ci-logs $argv

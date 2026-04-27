@@ -247,6 +247,27 @@ def get_oauth_client_config(service: str) -> dict[str, Any]:
     )
 
 
+def _run_oauth_flow(service: str, scopes: list[str]) -> Credentials:
+    """Run OAuth browser flow and store resulting token.
+
+    Args:
+        service: Service name (e.g., "gmail").
+        scopes: List of OAuth scopes required.
+
+    Returns:
+        Valid Google credentials.
+
+    Raises:
+        AuthenticationError: If OAuth flow fails.
+    """
+    client_config = get_oauth_client_config(service)
+    flow = InstalledAppFlow.from_client_config(client_config, scopes)
+    creds = flow.run_local_server(port=0)  # Opens browser for consent
+    # Save token to keyring for future use
+    set_credential(f"{service}-token-json", creds.to_json())
+    return creds
+
+
 def get_google_credentials(service: str, scopes: list[str]) -> Credentials:
     """Get Google credentials for human-in-the-loop use cases.
 
@@ -271,8 +292,22 @@ def get_google_credentials(service: str, scopes: list[str]) -> Credentials:
     token_json = get_credential(f"{service}-token-json")
     if token_json:
         try:
-            creds = Credentials.from_authorized_user_info(json.loads(token_json), scopes)
+            token_data = json.loads(token_json)
+            creds = Credentials.from_authorized_user_info(token_data, scopes)
             if creds and creds.valid:
+                # Check if stored token has all requested scopes
+                granted = set(token_data.get("scopes", []))
+                requested = set(scopes)
+                if granted and not requested.issubset(granted):
+                    # Merge scopes so user doesn't lose existing access
+                    merged = list(granted | requested)
+                    print(
+                        "Current token lacks required scopes. "
+                        "Opening browser for re-authentication...",
+                        file=sys.stderr,
+                    )
+                    delete_credential(f"{service}-token-json")
+                    return _run_oauth_flow(service, merged)
                 return creds
             # Refresh if expired but has refresh token
             if creds and creds.expired and creds.refresh_token:
@@ -286,12 +321,7 @@ def get_google_credentials(service: str, scopes: list[str]) -> Credentials:
 
     # 2. Initiate OAuth flow - human interaction required
     try:
-        client_config = get_oauth_client_config(service)
-        flow = InstalledAppFlow.from_client_config(client_config, scopes)
-        creds = flow.run_local_server(port=0)  # Opens browser for consent
-        # Save token to keyring for future use
-        set_credential(f"{service}-token-json", creds.to_json())
-        return creds
+        return _run_oauth_flow(service, scopes)
     except Exception as e:
         raise AuthenticationError(f"OAuth flow failed: {e}") from e
 
@@ -352,10 +382,9 @@ def handle_api_error(error: HttpError) -> None:
     if status_code == 403 and "insufficient" in message.lower():
         scope_help = (
             "\n\nInsufficient OAuth scope. This operation requires additional permissions.\n"
-            "To grant full access, revoke your current token and re-authenticate:\n\n"
-            "  1. Revoke: Go to https://myaccount.google.com/permissions and remove 'Agent Skills'\n"
-            "  2. Clear token: keyring del agent-skills gmail-token-json\n"
-            "  3. Re-run: python scripts/gmail.py check\n\n"
+            "To re-authenticate with the required scopes:\n\n"
+            "  1. Reset token: python scripts/gmail.py auth reset\n"
+            "  2. Re-run: python scripts/gmail.py check\n\n"
             "For setup help, see: docs/google-oauth-setup.md\n"
         )
         message = f"{message}{scope_help}"
@@ -649,6 +678,74 @@ def modify_message_labels(
 # ============================================================================
 
 
+def _decode_body_data(data: str) -> str:
+    """Decode base64url-encoded body data from Gmail API.
+
+    Args:
+        data: Base64url-encoded string.
+
+    Returns:
+        Decoded UTF-8 string.
+    """
+    return base64.urlsafe_b64decode(data).decode("utf-8", errors="replace")
+
+
+def _extract_body_from_parts(parts: list[dict[str, Any]], mime_type: str = "text/plain") -> str:
+    """Recursively extract body text from multipart message parts.
+
+    Args:
+        parts: List of message part dictionaries.
+        mime_type: Preferred MIME type to extract.
+
+    Returns:
+        Decoded body text, or empty string if not found.
+    """
+    for part in parts:
+        if part.get("mimeType") == mime_type:
+            data = part.get("body", {}).get("data", "")
+            if data:
+                return _decode_body_data(data)
+        # Recurse into nested parts (e.g., multipart/alternative inside multipart/mixed)
+        nested = part.get("parts")
+        if nested:
+            result = _extract_body_from_parts(nested, mime_type)
+            if result:
+                return result
+    return ""
+
+
+def extract_message_body(message: dict[str, Any]) -> str:
+    """Extract the body text from a Gmail message.
+
+    Handles both simple and multipart messages. Prefers text/plain,
+    falls back to text/html.
+
+    Args:
+        message: Message dictionary from Gmail API (full format).
+
+    Returns:
+        Decoded body text, or empty string if no body found.
+    """
+    payload = message.get("payload", {})
+
+    # Simple message: body data directly on payload
+    body_data = payload.get("body", {}).get("data", "")
+    if body_data:
+        return _decode_body_data(body_data)
+
+    # Multipart message: search parts for text/plain, then text/html
+    parts = payload.get("parts", [])
+    if parts:
+        body = _extract_body_from_parts(parts, "text/plain")
+        if body:
+            return body
+        body = _extract_body_from_parts(parts, "text/html")
+        if body:
+            return body
+
+    return ""
+
+
 def format_message_summary(message: dict[str, Any]) -> str:
     """Format a message for display.
 
@@ -664,11 +761,12 @@ def format_message_summary(message: dict[str, Any]) -> str:
     date = headers.get("Date", "(Unknown)")
     snippet = message.get("snippet", "")
 
-    return f"""ID: {message["id"]}
-From: {from_addr}
-Date: {date}
-Subject: {subject}
-Preview: {snippet[:100]}..."""
+    output = (
+        f"### {subject}\n- **ID:** {message['id']}\n- **From:** {from_addr}\n- **Date:** {date}"
+    )
+    if snippet:
+        output += f"\n- **Preview:** {snippet[:100]}..."
+    return output
 
 
 def format_label(label: dict[str, Any]) -> str:
@@ -683,7 +781,7 @@ def format_label(label: dict[str, Any]) -> str:
     name = label.get("name", "(Unknown)")
     label_id = label.get("id", "(Unknown)")
     label_type = label.get("type", "user")
-    return f"{name} (ID: {label_id}, Type: {label_type})"
+    return f"- **{name}** (ID: {label_id}, Type: {label_type})"
 
 
 # ============================================================================
@@ -776,11 +874,10 @@ def cmd_check(_args):
 
             if not all_granted:
                 print("\n⚠️  Not all scopes are granted. Some operations may fail.")
-                print("   To grant full access, revoke and re-authenticate:")
+                print("   To grant full access, reset and re-authenticate:")
                 print()
-                print("   1. Revoke: https://myaccount.google.com/permissions")
-                print("   2. Clear token: keyring del agent-skills gmail-token-json")
-                print("   3. Re-run: python scripts/gmail.py check")
+                print("   1. Reset token: python scripts/gmail.py auth reset")
+                print("   2. Re-run: python scripts/gmail.py check")
                 print()
                 print("   See: docs/google-oauth-setup.md")
         return 0
@@ -824,6 +921,55 @@ def cmd_auth_setup(args):
     return 0
 
 
+def cmd_auth_reset(_args):
+    """Handle 'auth reset' command."""
+    delete_credential("gmail-token-json")
+    print("OAuth token cleared. Next command will trigger re-authentication.")
+    return 0
+
+
+def cmd_auth_status(_args):
+    """Handle 'auth status' command."""
+    token_json = get_credential("gmail-token-json")
+    if not token_json:
+        print("No OAuth token stored.")
+        return 1
+
+    try:
+        token_data = json.loads(token_json)
+    except json.JSONDecodeError:
+        print("Stored token is corrupted.")
+        return 1
+
+    print("OAuth token is stored.")
+
+    # Granted scopes
+    scopes = token_data.get("scopes", [])
+    if scopes:
+        print("\nGranted scopes:")
+        for scope in scopes:
+            print(f"  - {scope}")
+    else:
+        print("\nGranted scopes: (unknown - legacy token)")
+
+    # Refresh token
+    has_refresh = bool(token_data.get("refresh_token"))
+    print(f"\nRefresh token: {'present' if has_refresh else 'missing'}")
+
+    # Expiry
+    expiry = token_data.get("expiry")
+    if expiry:
+        print(f"Token expiry: {expiry}")
+
+    # Client ID (truncated)
+    client_id = token_data.get("client_id", "")
+    if client_id:
+        truncated = client_id[:16] + "..." if len(client_id) > 16 else client_id
+        print(f"Client ID: {truncated}")
+
+    return 0
+
+
 def cmd_messages_list(args):
     """Handle 'messages list' command."""
     service = build_gmail_service(GMAIL_SCOPES_READONLY)
@@ -835,12 +981,11 @@ def cmd_messages_list(args):
         if not messages:
             print("No messages found")
         else:
-            print(f"Found {len(messages)} message(s):\n")
+            print(f"## Messages\n\nFound {len(messages)} message(s):\n")
             for msg in messages:
                 # Fetch full message details for display
                 full_msg = get_message(service, msg["id"], format="metadata")
                 print(format_message_summary(full_msg))
-                print("-" * 80)
 
     return 0
 
@@ -852,8 +997,20 @@ def cmd_messages_get(args):
 
     if args.json:
         print(json.dumps(message, indent=2))
+    elif args.format == "raw":
+        # Raw format: decode the full RFC 2822 message
+        raw_data = message.get("raw", "")
+        if raw_data:
+            print(_decode_body_data(raw_data))
+        else:
+            print("(No raw data available)")
     else:
         print(format_message_summary(message))
+        # Show body for full format
+        if args.format == "full":
+            body = extract_message_body(message)
+            if body:
+                print(f"\n---\n\n{body}")
 
     return 0
 
@@ -868,9 +1025,9 @@ def cmd_send(args):
     if args.json:
         print(json.dumps(result, indent=2))
     else:
-        print("✓ Message sent successfully")
-        print(f"  Message ID: {result.get('id')}")
-        print(f"  Thread ID: {result.get('threadId')}")
+        print("**Message sent successfully**")
+        print(f"- **Message ID:** {result.get('id')}")
+        print(f"- **Thread ID:** {result.get('threadId')}")
 
     return 0
 
@@ -886,12 +1043,11 @@ def cmd_drafts_list(args):
         if not drafts:
             print("No drafts found")
         else:
-            print(f"Found {len(drafts)} draft(s):\n")
+            print(f"## Drafts\n\nFound {len(drafts)} draft(s):\n")
             for draft in drafts:
-                print(f"Draft ID: {draft['id']}")
+                print(f"- **Draft ID:** {draft['id']}")
                 if "message" in draft:
-                    print(f"  Message ID: {draft['message']['id']}")
-                print("-" * 40)
+                    print(f"  - **Message ID:** {draft['message']['id']}")
 
     return 0
 
@@ -906,8 +1062,8 @@ def cmd_drafts_create(args):
     if args.json:
         print(json.dumps(result, indent=2))
     else:
-        print("✓ Draft created successfully")
-        print(f"  Draft ID: {result.get('id')}")
+        print("**Draft created successfully**")
+        print(f"- **Draft ID:** {result.get('id')}")
 
     return 0
 
@@ -920,8 +1076,8 @@ def cmd_drafts_send(args):
     if args.json:
         print(json.dumps(result, indent=2))
     else:
-        print("✓ Draft sent successfully")
-        print(f"  Message ID: {result.get('id')}")
+        print("**Draft sent successfully**")
+        print(f"- **Message ID:** {result.get('id')}")
 
     return 0
 
@@ -937,7 +1093,7 @@ def cmd_labels_list(args):
         if not labels:
             print("No labels found")
         else:
-            print(f"Found {len(labels)} label(s):\n")
+            print(f"## Labels\n\nFound {len(labels)} label(s):\n")
             for label in labels:
                 print(format_label(label))
 
@@ -952,9 +1108,9 @@ def cmd_labels_create(args):
     if args.json:
         print(json.dumps(result, indent=2))
     else:
-        print("✓ Label created successfully")
-        print(f"  Name: {result.get('name')}")
-        print(f"  ID: {result.get('id')}")
+        print("**Label created successfully**")
+        print(f"- **Name:** {result.get('name')}")
+        print(f"- **ID:** {result.get('id')}")
 
     return 0
 
@@ -983,6 +1139,9 @@ def build_parser() -> argparse.ArgumentParser:
     setup_parser = auth_subparsers.add_parser("setup", help="Setup OAuth client credentials")
     setup_parser.add_argument("--client-id", required=True, help="OAuth client ID")
     setup_parser.add_argument("--client-secret", required=True, help="OAuth client secret")
+
+    auth_subparsers.add_parser("reset", help="Clear stored OAuth token")
+    auth_subparsers.add_parser("status", help="Show current token info")
 
     # messages commands
     messages_parser = subparsers.add_parser("messages", help="Message operations")
@@ -1096,6 +1255,10 @@ def main():
         elif args.command == "auth":
             if args.auth_command == "setup":
                 return cmd_auth_setup(args)
+            elif args.auth_command == "reset":
+                return cmd_auth_reset(args)
+            elif args.auth_command == "status":
+                return cmd_auth_status(args)
         elif args.command == "messages":
             if args.messages_command == "list":
                 return cmd_messages_list(args)

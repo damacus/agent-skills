@@ -6,18 +6,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/vercel-labs/skills.git",
       "skillPath": "skills/find-skills/SKILL.md",
-      "skillFolderHash": "c2f31172b6f256272305a5e6e7228b258446899f",
+      "skillFolderHash": "3013fdeb8a11b10b1eb795ec3ae8bfca38f7c26d",
       "installedAt": "2026-01-31T22:49:59.930Z",
-      "updatedAt": "2026-01-31T22:49:59.930Z"
+      "updatedAt": "2026-04-27T10:45:58.557Z"
     },
     "gmail": {
       "source": "odyssey4me/agent-skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/odyssey4me/agent-skills.git",
       "skillPath": "skills/gmail/SKILL.md",
-      "skillFolderHash": "2efa98ce70141a564366df68df026639fbfd5f08",
+      "skillFolderHash": "ffa91d8907cbd2b349e25dc17d03127c14731d86",
       "installedAt": "2026-02-10T21:37:33.751Z",
-      "updatedAt": "2026-02-10T21:37:33.751Z"
+      "updatedAt": "2026-04-27T10:46:00.523Z"
     },
     "paperless-search": {
       "source": "nicolaischmid/agent-skills",
@@ -33,27 +33,27 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/markpitt/claude-skills.git",
       "skillPath": "skills/freeagent-api/SKILL.md",
-      "skillFolderHash": "f3239c0be0ae53e293a5ac848d47186073a123cc",
+      "skillFolderHash": "0a5c85d695423215838f160e4271137755b652ea",
       "installedAt": "2026-02-10T21:38:13.658Z",
-      "updatedAt": "2026-02-10T21:38:13.658Z"
+      "updatedAt": "2026-04-27T10:46:02.549Z"
     },
     "security-reviewer": {
       "source": "jeffallan/claude-skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/jeffallan/claude-skills.git",
       "skillPath": "skills/security-reviewer/SKILL.md",
-      "skillFolderHash": "b5ebf01b52c4adeecfb497eaac7b4d295842757f",
+      "skillFolderHash": "c18236ee914c1de8a3d83a3d503af579b2aa7f16",
       "installedAt": "2026-02-20T14:32:12.886Z",
-      "updatedAt": "2026-02-20T14:32:12.886Z"
+      "updatedAt": "2026-04-27T10:46:04.617Z"
     },
     "playwright-cli": {
       "source": "microsoft/playwright-cli",
       "sourceType": "github",
       "sourceUrl": "https://github.com/microsoft/playwright-cli.git",
       "skillPath": "skills/playwright-cli/SKILL.md",
-      "skillFolderHash": "a5a8823e403adc13b2488aae9968d6d92adbd2d7",
+      "skillFolderHash": "e065db5c5c0a7b197cdbcb1e70c9b374f80a7c91",
       "installedAt": "2026-02-26T14:25:09.294Z",
-      "updatedAt": "2026-02-26T14:25:09.294Z"
+      "updatedAt": "2026-04-27T10:46:06.408Z"
     },
     "web-quality-audit": {
       "source": "addyosmani/web-quality-skills",
@@ -69,9 +69,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/accessibility/SKILL.md",
-      "skillFolderHash": "8a47ac5ab4145d0eb7b261a7ecb085214cf4248a",
+      "skillFolderHash": "610035b217cff3f6e63b4d9edfe1e113ecebf5f6",
       "installedAt": "2026-03-04T00:12:32.983Z",
-      "updatedAt": "2026-03-04T00:12:32.983Z"
+      "updatedAt": "2026-04-27T10:46:07.965Z"
     },
     "core-web-vitals": {
       "source": "addyosmani/web-quality-skills",
@@ -100,6 +100,15 @@
       "pluginName": "example-skills",
       "installedAt": "2026-03-09T10:48:43.470Z",
       "updatedAt": "2026-03-09T10:48:43.470Z"
+    },
+    "google-material-design": {
+      "source": "copyleftdev/sk1llz",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/copyleftdev/sk1llz.git",
+      "skillPath": "organizations/google/material-design/SKILL.md",
+      "skillFolderHash": "3f7bbeeeff81348c91d5f451e962bf3c41708ebc",
+      "installedAt": "2026-04-14T19:28:30.976Z",
+      "updatedAt": "2026-04-14T19:28:48.837Z"
     }
   },
   "dismissed": {
@@ -107,15 +116,18 @@
   },
   "lastSelectedAgents": [
     "amp",
+    "antigravity",
     "cline",
     "codex",
     "cursor",
+    "deepagents",
+    "firebender",
     "gemini-cli",
     "github-copilot",
     "kimi-cli",
     "opencode",
+    "warp",
     "claude-code",
-    "windsurf",
-    "antigravity"
+    "windsurf"
   ]
 }
