@@ -60,11 +60,14 @@
 └── README.md
 ```
 
-### Directories NOT used
+### Directories NOT used in Full Migration scope
 
 - **No `recipes/` directory** — sous-chefs cookbooks provide custom resources, not recipes
 - **No `attributes/` directory** — use resource properties, not node attributes
 - **No `files/` directory** — prefer `template` or inline `file` content
+
+Incremental modernization may keep legacy directories temporarily, but the PR must clearly state
+which public recipe/attribute APIs remain and why.
 
 ## metadata.rb
 
@@ -181,6 +184,8 @@ suites:
 ## kitchen.dokken.yml
 
 Contains **only** Dokken driver and platform definitions. **No suites** — those come from `kitchen.yml`.
+Do not create `kitchen.dokken.yml` for Windows-only cookbooks or cookbooks that cannot run in
+containers.
 
 > **Keep platform lists in sync.** When adding or removing platforms from
 > `kitchen.dokken.yml`, update `kitchen.yml` and `kitchen.global.yml` to match
@@ -240,6 +245,37 @@ verifier:
   name: inspec
   sudo: true
 ```
+
+## Windows Kitchen Files
+
+Windows-only cookbooks may use `kitchen.windows.yml` or `kitchen.exec.yml` with GitHub Actions
+`windows-latest` runners. They are not expected to mirror Linux/Dokken platform lists.
+
+```yaml
+---
+driver:
+  name: exec
+
+transport:
+  name: exec
+
+provisioner:
+  name: chef_infra
+  chef_license: accept-no-persist
+  multiple_converge: 2
+  enforce_idempotency: true
+  deprecations_as_errors: true
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: windows-latest
+```
+
+When auditing platform sync, include every Kitchen file that exists: `kitchen.yml`,
+`kitchen.dokken.yml`, `kitchen.global.yml`, `kitchen.exec.yml`, `kitchen.windows.yml`, and any
+suite-specific Kitchen files.
 
 ## Other Config Files
 

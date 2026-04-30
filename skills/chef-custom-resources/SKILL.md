@@ -21,11 +21,64 @@ Execute these phases in order. Read the referenced file before starting each pha
 
 ## Enforcement
 
-- **Phase 0 is blocking**: You MUST NOT modify files, create commits, or open a PR until the user has explicitly confirmed whether the work is a **full custom resource migration** or **incremental modernization**
+- **Read-only triage is allowed before Phase 0**: When the user asks to find, rank, or assess
+  candidate cookbooks, inspect only. Do not modify cookbook files during triage.
+- **Classify before scoping**: For triage work, every cookbook must be classified as
+  `MIGRATE`, `DEPRECATE`, or `NEEDS OWNER DECISION` before Phase 0. Use this classification
+  to decide whether to start migration planning, write a deprecation recommendation, or ask for
+  ownership/product direction.
+- **Phase 0 is blocking for cookbook changes**: You MUST NOT modify cookbook files, create commits, or open a PR until the user has explicitly confirmed whether the work is a **full custom resource migration** or **incremental modernization**
 - **No silent scope downgrades**: If the cookbook is too large, risky, or messy to follow the structural rules in the chosen scope, stop and ask the user how to proceed. Do not quietly switch to an in-place or partial refactor
 - **Every phase needs explicit evidence**: At the end of each phase, output a markdown checklist for that phase's "Done when" items and state how each item was verified in the current session (for example `ls`, `rg`, `cat`, `cookstyle`, `chef exec rspec`, `kitchen test`)
 - **Verification gates action**: You MUST NOT invoke `@github-pr` until the outputs of `cookstyle`, `chef exec rspec`, and `kitchen test` have been shown in the current session
 - **Structural audit before PR**: Before proposing or opening a PR, run a final structural audit and report the results, including `ls -R` output and confirmation that `recipes/` and `attributes/` are absent when the scope is Full Migration
+
+### Phase -1: Read-only Triage
+
+Use this phase when the user asks which cookbooks should be migrated, deprecated, or assessed.
+This phase is non-mutating and can run before Phase 0.
+
+1. Inventory public API surface:
+   - `recipes/`
+   - `attributes/`
+   - `definitions/`
+   - `libraries/` providers/resources/classes/helpers
+   - `resources/`
+   - README-documented recipes, attributes, resources, and examples
+2. Audit existing resources for:
+   - missing `provides`
+   - missing `unified_mode true`
+   - missing `# frozen_string_literal: true`
+   - old `load_current_resource`
+   - direct `run_action`
+   - global `Chef::Resource.include` / `Chef::DSL::Recipe.include`
+   - node attribute reads inside resources that should become properties
+   - compile-time `shell_out`
+   - missing `:delete` / `:remove` semantics for artifacts created by `:create`
+3. Audit test and CI readiness:
+   - resource `step_into` ChefSpec coverage
+   - default Kitchen suite
+   - test cookbook recipes under `test/cookbooks/test/recipes/`
+   - InSpec profiles using `inspec.yml` + `controls/`
+   - absence of `supports` filters in InSpec profiles
+   - drift between `metadata.rb`, Kitchen files, and CI matrix
+4. Classify each cookbook:
+   - `MIGRATE`: product/domain remains useful and a custom-resource API is the desired public surface
+   - `DEPRECATE`: cookbook is too thin, product is obsolete, upstream packaging is stale, or the
+     functionality is better handled directly by built-in Chef resources
+   - `NEEDS OWNER DECISION`: product viability, external service ownership, or compatibility goals
+     are unclear enough that migration work would encode the wrong public API
+
+**Done when:** Each inspected cookbook has a `MIGRATE`, `DEPRECATE`, or `NEEDS OWNER DECISION`
+classification with the evidence that drove it.
+
+**Report before moving on:**
+
+- [ ] Public API surface was inventoried
+- [ ] Existing resources were audited for modern custom resource patterns
+- [ ] Test and CI readiness was checked
+- [ ] Each cookbook was classified as `MIGRATE`, `DEPRECATE`, or `NEEDS OWNER DECISION`
+- [ ] Any skill guidance gaps found during triage were listed
 
 ### Phase 0: Scope
 
@@ -35,7 +88,7 @@ Before starting, clarify the scope with the user:
 
 This avoids mid-session rework. If the user says "modernize", confirm which they mean.
 
-Do not edit any files until the user has answered this question explicitly.
+Do not edit cookbook files until the user has answered this question explicitly.
 
 **Done when:** The user has explicitly confirmed `Full Migration` or `Incremental Modernization`, and you have repeated that scope back before making changes.
 
@@ -140,10 +193,17 @@ Read [references/custom-resource-patterns.md](references/custom-resource-pattern
 
 - **New cookbook**: Write custom resources in `resources/` using `unified_mode true`
 - **Migration**: Convert class hierarchy in `libraries/` to flat resources in `resources/`
+- **Recipe/attribute migration**: Convert recipe behavior to resource actions and node attributes
+  to resource properties. Do not leave compatibility recipes or attributes in a Full Migration
+  unless the user explicitly chooses Incremental Modernization.
+- **Repo-wrapper cookbooks**: Convert repository recipes and attribute hashes to explicit resources
+  that wrap `apt_repository`, `yum_repository`, or `dnf_module` as appropriate. Preserve public
+  repo names, generated URLs, GPG keys, stock repo file deletion, and enable/disable defaults in
+  properties or helper methods.
 - **Maintenance**: Fix issues in existing resources, ensure patterns are current
 - Extract shared properties into **resource partials** (`resources/_partial/`)
 - Keep shared helper methods in `libraries/` modules, include via `action_class`
-- Use `systemd_unit` for all service management — see [references/systemd-patterns.md](references/systemd-patterns.md)
+- Use `systemd_unit` for Linux systemd service management — see [references/systemd-patterns.md](references/systemd-patterns.md). For Windows-only cookbooks, use platform-native resources such as `windows_package`, `registry_key`, `windows_path`, `service`, `powershell_script`, and IIS resources as appropriate.
 - **Run `cookstyle -a` frequently** during this phase to catch deprecations early (e.g. `yum_repository` uses `:remove` not `:delete`)
 
 **Done when:** All resources compile (`chef exec ruby -c resources/*.rb`), `cookstyle` reports 0 offenses, and no legacy `libraries/` class hierarchy remains (if migration scope).
@@ -300,8 +360,12 @@ If the user confirms, invoke the `@github-pr` skill to create the PR.
 - **No `recipes/` directory**: Custom resource cookbooks provide resources, not recipes. During migration, delete `recipes/` and move usage into test cookbook recipes (`test/cookbooks/test/recipes/`)
 - **CI aligns with kitchen.yml**: The `.github/workflows/ci.yml` integration matrix must match every suite × platform combination defined in `kitchen.yml` (or `kitchen.exec.yml` for CI). When suites or platforms change, update the CI matrix to match.
 - **CI vs Local Split**: When a hypervisor (Vagrant) is required for local testing, maintain `kitchen.yml` for local use and `kitchen.exec.yml` for CI. Use `ubuntu-latest` for CI.
+- **Windows CI Split**: Windows-only cookbooks may use `kitchen.exec.yml` or `kitchen.windows.yml`
+  on `windows-latest`. Do not force Dokken or Linux platform parity onto Windows-only cookbooks.
 - **Runner Optimization**: In `kitchen.exec.yml`, always set `chef_omnibus_install: false` to use the pre-installed Chef on GitHub runners and avoid `sudo` password prompts. Ensure `sudo: true` is set for resources managing system services.
 - **Platform lists in sync**: `kitchen.yml`, `kitchen.dokken.yml` (if used), and `.github/workflows/ci.yml` must all list the same platforms. When you change one, update all three
+- **All Kitchen files count**: Include `kitchen.global.yml`, `kitchen.exec.yml`, `kitchen.windows.yml`,
+  and any suite-specific Kitchen files in platform and verifier audits when they exist.
 - **Run cookstyle early and often**: Run `cookstyle -a` after every batch of resource changes. It catches deprecations (e.g. `yum_repository :delete` → `:remove`) that are easy to miss
 - **No `supports` in InSpec `inspec.yml`**: The `supports: platform-family:` filter silently skips profiles in Dokken containers. Omit it entirely
 - **No lazy shell_out at compile time**: If a resource action needs `shell_out`, wrap it in a `lazy` block or move it inside a sub-resource's property. ChefSpec will reject compile-time `shell_out` calls

@@ -6,6 +6,10 @@
 - [Resource Partials](#resource-partials)
 - [Helper Modules](#helper-modules)
 - [Migration from Libraries](#migration-from-libraries)
+- [Migration from Recipes and Attributes](#migration-from-recipes-and-attributes)
+- [Repository Wrapper Cookbooks](#repository-wrapper-cookbooks)
+- [Existing Resource Audit](#existing-resource-audit)
+- [Windows Resources](#windows-resources)
 - [Property Patterns](#property-patterns)
 - [Action Patterns](#action-patterns)
 
@@ -219,6 +223,147 @@ action :create do
   # ...
 end
 ```
+
+## Migration from Recipes and Attributes
+
+Many sous-chefs cookbooks are legacy recipe/attribute cookbooks rather than old
+library-provider cookbooks. Treat these as public API migrations, not mechanical file moves.
+
+### Migration steps
+
+1. Inventory every recipe, attribute file, and README example.
+2. Group recipe behavior into resources by user intent, usually:
+   - `<cookbook>_install`
+   - `<cookbook>_config`
+   - `<cookbook>_service`
+   - `<cookbook>_client`
+   - `<cookbook>_server`
+3. Convert node attributes to resource properties. Preserve defaults as property defaults or helper
+   methods, not `node['cookbook']` reads.
+4. Move recipe examples into `test/cookbooks/test/recipes/`.
+5. Delete `recipes/` and `attributes/` only for Full Migration scope.
+6. Write `migration.md` explaining the breaking API change from recipes/attributes to resources.
+
+### Default mapping
+
+```ruby
+# attributes/default.rb
+default['myapp']['package_name'] = 'myapp'
+default['myapp']['config_dir'] = '/etc/myapp'
+```
+
+```ruby
+# resources/myapp_install.rb
+# frozen_string_literal: true
+
+provides :myapp_install
+unified_mode true
+
+property :package_name, String, default: 'myapp'
+
+action :install do
+  package new_resource.package_name
+end
+```
+
+Prefer explicit properties over an escape-hatch `config` hash unless the upstream config surface
+is intentionally pass-through.
+
+## Repository Wrapper Cookbooks
+
+For `yum-*`, `apt-*`, or package-repository cookbooks, the custom resource should model the repo
+API explicitly instead of preserving node attributes.
+
+### Recommended shape
+
+```ruby
+# resources/yum_example_repo.rb
+# frozen_string_literal: true
+
+provides :yum_example_repo
+unified_mode true
+
+property :repo_name, String, name_property: true
+property :description, String, default: lazy { default_description }
+property :baseurl, [String, nil], default: lazy { default_baseurl }
+property :mirrorlist, [String, nil], default: nil
+property :gpgkey, [String, Array], required: true
+property :enabled, [true, false], default: true
+property :gpgcheck, [true, false], default: true
+
+action :create do
+  yum_repository new_resource.repo_name do
+    description new_resource.description
+    baseurl new_resource.baseurl if new_resource.baseurl
+    mirrorlist new_resource.mirrorlist if new_resource.mirrorlist
+    gpgkey new_resource.gpgkey
+    enabled new_resource.enabled
+    gpgcheck new_resource.gpgcheck
+    action :create
+  end
+end
+
+action :remove do
+  yum_repository new_resource.repo_name do
+    action :remove
+  end
+end
+```
+
+Preserve behavior that users can observe:
+
+- repository IDs and generated file names
+- generated base URLs / mirrorlists
+- GPG keys and GPG check defaults
+- enable/disable defaults
+- deletion of stock distro repo files when the legacy recipe did that
+- helper-derived platform/release values
+
+For hyphenated cookbook names, resource names use underscores:
+
+- `yum-epel` -> `yum_epel_repo`
+- `yum-mysql-community` -> `yum_mysql_community_repo`
+
+## Existing Resource Audit
+
+When a cookbook already has resources, audit them before adding new resources.
+
+Required checks:
+
+- `# frozen_string_literal: true` is the first line
+- `provides :resource_name` is present
+- `unified_mode true` is present
+- no old `load_current_resource`
+- no direct `run_action` unless there is no Chef-native alternative and it is justified
+- no global `Chef::Resource.include` or `Chef::DSL::Recipe.include`
+- no compile-time `shell_out`; use action-time helpers or `lazy` values
+- resource reads `new_resource` properties instead of cookbook node attributes
+- `:delete` / `:remove` reverses every artifact created by `:create`
+
+If keeping a legacy alias, document it and test both names:
+
+```ruby
+provides :new_resource_name
+provides :old_resource_name
+```
+
+## Windows Resources
+
+Windows-only cookbooks do not use Dokken or systemd. Use native Chef resources and Windows CI.
+
+Common resource choices:
+
+- `windows_package` or `package` for MSI/EXE installers
+- `remote_file` for installer downloads
+- `archive_file` for ZIP extraction
+- `registry_key` for registry state
+- `windows_path` or `env` for PATH/environment changes
+- `service` for Windows services
+- `powershell_script` for operations with no native resource
+- IIS resources when the cookbook manages IIS state
+
+Windows resources still require `provides`, `unified_mode true`, explicit properties, ChefSpec
+coverage, InSpec coverage, and delete/remove semantics where the installer or platform supports it.
 
 ## Property Patterns
 
