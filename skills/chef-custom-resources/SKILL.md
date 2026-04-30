@@ -82,15 +82,16 @@ classification with the evidence that drove it.
 
 ### Phase 0: Scope
 
-Before starting, clarify the scope with the user:
+Before starting, clarify the scope with the user using an interactive prompt.
 
-> "Should I do a **full custom resource migration** (delete recipes/, attributes/, rewrite as resources/) or **incremental modernization** (update existing patterns in place)?"
+**Interactive Selection:**
+I will ask you to select the scope of work:
+1. **Full Migration**: Delete `recipes/` and `attributes/`, rewrite everything as resources.
+2. **Incremental Modernization**: Update existing patterns in place (e.g., add `unified_mode`, fix style).
 
-This avoids mid-session rework. If the user says "modernize", confirm which they mean.
+Do not edit cookbook files until you have explicitly confirmed the scope.
 
-Do not edit cookbook files until the user has answered this question explicitly.
-
-**Done when:** The user has explicitly confirmed `Full Migration` or `Incremental Modernization`, and you have repeated that scope back before making changes.
+**Done when:** The user has explicitly confirmed `Full Migration` or `Incremental Modernization` via the prompt, and you have repeated that scope back before making changes.
 
 ### Phase 1: Research
 

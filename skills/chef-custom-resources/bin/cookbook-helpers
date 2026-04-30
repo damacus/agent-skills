@@ -60,7 +60,46 @@ end
 function require_cmd
     for cmd in $argv
         if not type -q $cmd
+            # If command not found, check if mise can provide it
+            if type -q mise; and mise which $cmd >/dev/null 2>/dev/null
+                continue
+            end
             die "required command not found: $cmd"
+        end
+    end
+end
+
+function run_chef_cmd
+    set -l cmd $argv
+    if type -q $cmd[1]
+        $cmd
+        return $status
+    end
+
+    if type -q mise
+        mise exec -- $cmd
+        return $status
+    end
+
+    return 127
+end
+
+function cmd_setup_mise
+    set -l cookbook_dir "."
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+
+    set -l mise_toml "$cookbook_dir/.mise.toml"
+    if test -f "$mise_toml"
+        ok ".mise.toml already exists"
+    else
+        echo '[env]' > "$mise_toml"
+        echo '_.path = "/opt/chef-workstation/bin"' >> "$mise_toml"
+        ok "created .mise.toml with Chef Workstation path"
+        if type -q mise
+            info "running 'mise trust'"
+            mise trust "$mise_toml" >/dev/null 2>/dev/null
         end
     end
 end
@@ -290,7 +329,26 @@ function cmd_check_platforms
     return $exit_code
 end
 
+function extract_kitchen_platforms
+    set -l file $argv[1]
+    set -l platforms (yq -r '.platforms[].name' "$file" 2>/dev/null)
+    if test (count $platforms) -gt 0
+        printf '%s\n' $platforms | sort -u
+    end
+end
+
+function extract_ci_platforms
+    set -l file $argv[1]
+    # Check all job matrices for os or platform keys
+    set -l platforms (yq -r '.. | select(has("matrix")) | .matrix | (.os // .platform) | .[]' "$file" 2>/dev/null)
+    
+    if test (count $platforms) -gt 0
+        printf '%s\n' $platforms | sort -u
+    end
+end
+
 function cmd_check_kitchen
+    require_cmd yq
     set -l cookbook_dir "."
     if set -q argv[1]; and test -n "$argv[1]"
         set cookbook_dir $argv[1]
@@ -306,9 +364,8 @@ function cmd_check_kitchen
     set -l kitchen_platforms
     set -l dokken_platforms
 
-    # Extract platform names from kitchen.yml
     if test -f "$kitchen_yml"
-        set kitchen_platforms (awk '/^platforms:/{found=1; next} /^[^ ]/{found=0} found && /- name:/{gsub(/.*name:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print}' "$kitchen_yml" | sort)
+        set kitchen_platforms (extract_kitchen_platforms "$kitchen_yml")
         info "kitchen.yml platforms:"
         for p in $kitchen_platforms
             echo "    $p"
@@ -319,26 +376,22 @@ function cmd_check_kitchen
 
     echo ""
 
-    # Extract platform names from kitchen.dokken.yml
     if test -f "$kitchen_dokken"
-        set dokken_platforms (awk '/^platforms:/{found=1; next} /^[^ ]/{found=0} found && /- name:/{gsub(/.*name:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print}' "$kitchen_dokken" | sort)
+        set dokken_platforms (extract_kitchen_platforms "$kitchen_dokken")
         info "kitchen.dokken.yml platforms:"
         for p in $dokken_platforms
             echo "    $p"
         end
 
-        # Compare
         if test -f "$kitchen_yml"
             set -l only_kitchen
             set -l only_dokken
 
-            # Find items in kitchen but not in dokken
             for p in $kitchen_platforms
                 if not contains -- $p $dokken_platforms
                     set -a only_kitchen $p
                 end
             end
-            # Find items in dokken but not in kitchen
             for p in $dokken_platforms
                 if not contains -- $p $kitchen_platforms
                     set -a only_dokken $p
@@ -370,18 +423,118 @@ function cmd_check_kitchen
 
     echo ""
 
-    # Check CI matrix
     if test -f "$ci_yml"
         info "CI workflow found: $ci_yml"
-        set -l ci_platforms (grep -oE '[a-z]+-[0-9]+(\.[0-9]+)?' "$ci_yml" 2>/dev/null | sort -u | grep -v 'runs-on' | grep -v 'ubuntu-latest')
+        set -l raw_ci_platforms (extract_ci_platforms "$ci_yml")
+        set -l ci_platforms
+        
+        # Normalize and filter CI platforms
+        for p in $raw_ci_platforms
+            # Exclude runners
+            if string match -rq 'ubuntu-latest|macos-latest|windows-latest' "$p"
+                continue
+            end
+            
+            # Normalize dots
+            set -l norm (string replace -a '.' '' $p)
+            set -a ci_platforms $norm
+        end
+
         if test (count $ci_platforms) -gt 0
-            echo "  CI platforms detected:"
+            echo "  CI platforms detected (normalized):"
             for p in $ci_platforms
                 echo "    $p"
             end
         end
+
+        if test (count $kitchen_platforms) -gt 0
+            set -l normalized_kitchen (string replace -a '.' '' $kitchen_platforms | sort -u)
+            set -l only_kitchen
+            set -l only_ci
+
+            for p in $normalized_kitchen
+                if not contains -- $p $ci_platforms
+                    set -a only_kitchen $p
+                end
+            end
+            for p in $ci_platforms
+                # Verify if it's a known platform prefix before flagging as "missing from kitchen"
+                set -l is_known no
+                for entry in $PLATFORMS
+                    parse_platform $entry
+                    if string match -q "$_kitchen_prefix*" $p
+                        set is_known yes
+                        break
+                    end
+                end
+
+                if test "$is_known" = yes; and not contains -- $p $normalized_kitchen
+                    set -a only_ci $p
+                end
+            end
+
+            echo ""
+            if test (count $only_kitchen) -gt 0
+                warn "In kitchen.yml but NOT in CI matrix (normalized):"
+                for p in $only_kitchen
+                    echo "    $p"
+                end
+                set exit_code 1
+            end
+            if test (count $only_ci) -gt 0
+                warn "In CI matrix but NOT in kitchen.yml (normalized):"
+                for p in $only_ci
+                    echo "    $p"
+                end
+                set exit_code 1
+            end
+            if test (count $only_kitchen) -eq 0; and test (count $only_ci) -eq 0
+                ok "kitchen.yml and CI matrix platforms are in sync (normalized)"
+            end
+        end
     else
         info "No CI workflow found at $ci_yml"
+    end
+
+    return $exit_code
+end
+
+function cmd_check_docs
+    set -l cookbook_dir "."
+    if set -q argv[1]; and test -n "$argv[1]"
+        set cookbook_dir $argv[1]
+    end
+
+    set -l cookbook_name (cookbook_name_for_dir "$cookbook_dir")
+    echo -e "$BOLD""Documentation check: $cookbook_dir""$RESET"
+    echo ""
+
+    set -l exit_code 0
+    if not test -d "$cookbook_dir/resources"
+        info "no resources/ directory found"
+        return 0
+    end
+
+    set -l docs_dir "$cookbook_dir/documentation"
+    if not test -d "$docs_dir"
+        warn "missing documentation/ directory"
+        set exit_code 1
+    end
+
+    for rbfile in (find "$cookbook_dir/resources" -maxdepth 1 -name '*.rb' 2>/dev/null)
+        set -l bname (basename "$rbfile" .rb)
+        # Skip partials
+        if string match -q '_*' $bname
+            continue
+        end
+
+        set -l doc_file "$docs_dir/"$cookbook_name"_$bname.md"
+        if test -f "$doc_file"
+            ok "documentation found: "(basename "$doc_file")
+        else
+            warn "missing documentation for resource $bname: "(basename "$doc_file")
+            set exit_code 1
+        end
     end
 
     return $exit_code
@@ -467,8 +620,9 @@ function cmd_check_structure
         ok "all Ruby files have frozen_string_literal: true"
     end
 
-    # Check unified_mode in resources
+    # Check unified_mode and provides in resources
     set -l missing_unified 0
+    set -l missing_provides 0
     if test -d "$cookbook_dir/resources"
         for rbfile in (find "$cookbook_dir/resources" -maxdepth 1 -name '*.rb' 2>/dev/null)
             set -l bname (basename "$rbfile")
@@ -481,11 +635,19 @@ function cmd_check_structure
                 set missing_unified 1
                 set exit_code 1
             end
+            if not grep -qE "provides :|provides '" "$rbfile"
+                warn "missing provides :resource_name: $rbfile"
+                set missing_provides 1
+                set exit_code 1
+            end
         end
     end
 
     if test $missing_unified -eq 0
         ok "all resources have unified_mode true"
+    end
+    if test $missing_provides -eq 0
+        ok "all resources have provides declaration"
     end
 
     return $exit_code
@@ -688,11 +850,19 @@ function cmd_report
         set cookbook_dir $argv[1]
     end
 
+    if type -q mise; and not test -f "$cookbook_dir/.mise.toml"
+        warn "mise detected but no .mise.toml found. Run 'cookbook-helpers setup-mise' to fix."
+    end
+
     cmd_platforms
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
     cmd_check_structure "$cookbook_dir"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    cmd_check_docs "$cookbook_dir"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
@@ -811,8 +981,10 @@ function usage
     echo "  check-stale-refs    Detect stale helper and recipe references under test/"
     echo "  ci-logs             Fetch raw GitHub Actions job logs for failed or active jobs"
     echo "  check-structure     Validate cookbook directory structure"
+    echo "  check-docs          Verify resource documentation exists"
     echo "  generate-metadata   Output supports lines for metadata.rb"
     echo "  generate-dokken     Output kitchen.dokken.yml platform entries"
+    echo "  setup-mise          Create .mise.toml with standard Chef paths"
     echo "  report              Full report: platforms + structure + kitchen sync"
     echo ""
     echo "Options:"
@@ -845,10 +1017,14 @@ function main
             cmd_ci_logs $rest
         case check-structure
             cmd_check_structure $rest
+        case check-docs
+            cmd_check_docs $rest
         case generate-metadata
             cmd_generate_metadata $rest
         case generate-dokken
             cmd_generate_dokken $rest
+        case setup-mise
+            cmd_setup_mise $rest
         case report
             cmd_report $rest
         case -h --help help
