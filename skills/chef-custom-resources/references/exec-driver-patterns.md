@@ -9,9 +9,10 @@ Use the kitchen exec driver for these cookbooks:
 - **selinux** — requires kernel SELinux support
 - **firewall / ufw** — requires netfilter/iptables kernel modules
 - **Any cookbook that starts a systemd service requiring kernel features**
+- **Windows-only cookbooks** — use `windows-latest` runners instead of Dokken
 
 The exec driver runs Chef directly on the GitHub Actions runner host, which is a real
-Ubuntu VM with full kernel support.
+runner VM. Linux exec jobs usually run on Ubuntu; Windows exec jobs run on Windows.
 
 ## kitchen.exec.yml
 
@@ -41,7 +42,38 @@ platforms:
   - name: ubuntu-24.04
 ```
 
-Only list Ubuntu platforms — the exec driver runs on the GHA runner host which is Ubuntu.
+Only list Ubuntu platforms for Linux exec jobs because the Linux GitHub Actions runner host is
+Ubuntu. For Windows exec jobs, use a separate Kitchen file and list Windows runner platforms.
+
+## Windows Exec Driver
+
+Windows-only cookbooks should use a Windows runner and native Windows resources. Do not force these
+cookbooks through Dokken or Linux platform parity.
+
+```yaml
+---
+driver:
+  name: exec
+
+transport:
+  name: exec
+
+provisioner:
+  name: chef_infra
+  chef_license: accept-no-persist
+  multiple_converge: 2
+  enforce_idempotency: true
+  deprecations_as_errors: true
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: windows-latest
+```
+
+In GitHub Actions, run these jobs on `windows-latest` and pass the normalized Kitchen instance name
+used by the cookbook's Windows Kitchen file.
 
 ## Instance Name Gotcha
 
