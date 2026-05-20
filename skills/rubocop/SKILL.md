@@ -12,7 +12,7 @@ RuboCop is Ruby's premier static code analyzer (linter) and formatter, based on 
 
 ## When to Use This Skill
 
-Claude automatically uses this skill when users:
+Use this skill when users:
 
 - Ask to "check", "lint", "analyze", or "review" Ruby code
 - Request code formatting or style improvements

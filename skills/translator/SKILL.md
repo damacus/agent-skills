@@ -1,7 +1,9 @@
 ---
 name: translator
 description: Maintain translation files and keep locale trees in sync when UI copy changes, locale YAML files change, or new typography or design-system components introduce user-facing text. Use this skill for Rails i18n work, locale drift fixes, missing translation keys, and translation updates across config/locales.
-license: Complete terms in LICENSE.txt
+license: MIT
+metadata:
+  author: damacus
 ---
 
 Use this skill when a repository needs translation maintenance rather than general copywriting.

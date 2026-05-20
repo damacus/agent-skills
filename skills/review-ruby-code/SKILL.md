@@ -221,8 +221,8 @@ Cross-reference with changed files to identify coverage gaps.
 
 If simplecov not configured, check for existing skill:
 ```bash
-# Check if simplecov skill exists
-ls ~/.claude/skills/simplecov/
+# Check if simplecov skill exists in the local runtime
+ls ~/.agents/skills/simplecov/
 ```
 
 Use Skill tool to invoke simplecov skill for setup guidance if needed.

@@ -7,7 +7,7 @@ description: Comprehensive Ruby development skill covering language fundamentals
 
 ## Purpose
 
-This skill provides comprehensive guidance for Ruby development, covering language fundamentals, object-oriented design, error handling, performance optimization, and modern Ruby (3.x+) features. It synthesizes knowledge from Ruby internals, best practices, and official documentation to help Claude write idiomatic, maintainable, and performant Ruby code.
+This skill provides comprehensive guidance for Ruby development, covering language fundamentals, object-oriented design, error handling, performance optimization, and modern Ruby (3.x+) features. It synthesizes knowledge from Ruby internals, best practices, and official documentation to support idiomatic, maintainable, and performant Ruby code.
 
 ## When to Use This Skill
 

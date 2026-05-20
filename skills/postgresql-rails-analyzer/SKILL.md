@@ -1,6 +1,6 @@
 ---
 name: postgresql-rails-analyzer
-description: Comprehensive PostgreSQL configuration and usage analysis for Rails applications. Use when Claude Code needs to analyze a Rails codebase for database performance issues, optimization opportunities, or best practice violations. Detects N+1 queries, missing indexes, suboptimal database configurations, anti-patterns, and provides actionable recommendations. Ideal for performance audits, optimization tasks, or when users ask to "analyze the database", "check for N+1 queries", "optimize PostgreSQL", "review database performance", or "suggest database improvements".
+description: Comprehensive PostgreSQL configuration and usage analysis for Rails applications. Use when analyzing a Rails codebase for database performance issues, optimization opportunities, or best practice violations. Detects N+1 queries, missing indexes, suboptimal database configurations, anti-patterns, and provides actionable recommendations. Ideal for performance audits, optimization tasks, or when users ask to "analyze the database", "check for N+1 queries", "optimize PostgreSQL", "review database performance", or "suggest database improvements".
 ---
 
 # PostgreSQL Rails Analyzer
@@ -287,9 +287,9 @@ PostgreSQL Performance Analysis Report
 - Consider adding counter caches for frequently counted associations
 ```
 
-## Tips for Claude Code
+## Usage Tips
 
-When using this skill in Claude Code:
+When using this skill:
 
 1. Always navigate to the Rails root directory first
 2. Run scripts with Python 3 (`python3`, not `python`)

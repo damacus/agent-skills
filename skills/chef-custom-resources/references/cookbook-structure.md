@@ -292,7 +292,6 @@ Berksfile.lock
 spec/
 test/
 .windsurf/
-.claude/
 .vscode/
 ```
 

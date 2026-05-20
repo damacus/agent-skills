@@ -1,13 +1,13 @@
 ---
 name: ui-professional
-description: This skill transforms Claude into an expert UI designer who understands and applies fundamental design principles with precision. The skill is grounded in cognitive psychology (Gestalt principles), information theory (signal-to-noise ratio), and interaction design (affordance and hierarchy).
+description: Professional UI design guidance grounded in cognitive psychology, information theory, and interaction design. Use when designing, reviewing, or refining interfaces that need clear hierarchy, strong affordances, useful feedback, and low visual noise.
 ---
 
-# UI Agent Skill
+# UI Professional
 
 ## Overview
 
-This skill transforms Claude into an expert UI designer who understands and applies fundamental design principles with precision. The skill is grounded in cognitive psychology (Gestalt principles), information theory (signal-to-noise ratio), and interaction design (affordance and hierarchy).
+Use this skill to design and critique interfaces with disciplined attention to Gestalt principles, signal-to-noise ratio, affordance, hierarchy, feedback, and layout.
 
 ## Core Philosophy
 
@@ -20,26 +20,34 @@ This skill transforms Claude into an expert UI designer who understands and appl
 
 ## Skill Modules
 
-This skill is organized into specialized modules. When working on UI tasks, Claude should reference the relevant module(s):
+This skill is organized into specialized modules. When working on UI tasks, load the relevant module before making design decisions:
 
-### 📢 [Feedback & Alerting](./feedback-alerting.md)
+### Feedback & Alerting
+
+Reference: [feedback-alerting.md](./references/feedback-alerting.md)
 
 **Use when:** Implementing error messages, success notifications, warnings, banners, toasts, or any user feedback mechanism.
 
 **Key concerns:** Message placement, redundancy, severity matching, contextual proximity.
 
-### 🔘 [Buttons & Actions](./buttons-actions.md)
+### Buttons & Actions
+
+Reference: [buttons-actions.md](./references/buttons-actions.md)
 
 **Use when:** Creating CTAs, form submissions, navigation elements, or any clickable interactive component.
 
 **Key concerns:** Visual hierarchy, action priority, disabled states, affordance signals.
 
-### 📐 [Layout & Spacing](./layout-spacing.md)
+### Layout & Spacing
+
+Reference: [layout-spacing.md](./references/layout-spacing.md)
 
 **Use when:** Organizing content, establishing visual relationships, creating information architecture, or structuring pages.
 **Key concerns:** Proximity grouping, white space usage, visual relationships, scanning patterns.
 
-### 🎨 [Visual Hierarchy](./visual-hierarchy.md)
+### Visual Hierarchy
+
+Reference: [visual-hierarchy.md](./references/visual-hierarchy.md)
 
 - **Use when:** Determining element importance, establishing reading order, or balancing competing elements.
 - **Key concerns:** Size, color, contrast, weight, position, information priority.
@@ -120,7 +128,7 @@ Using vague, generic labels ("Error", "Warning") without specific guidance.
 
 **Why it fails:** Doesn't help users understand or fix the problem, creates frustration.
 
-## Usage Guidelines for Claude
+## Usage Guidelines
 
 ### When Creating UI
 
@@ -160,12 +168,12 @@ This skill should influence:
 
 A well-designed UI following this skill will:
 
-- ✅ Users understand what happened and why
-- ✅ Users know how to fix issues
-- ✅ No redundant messages or UI elements
-- ✅ Visual hierarchy matches functional importance
-- ✅ Related elements are visually grouped
-- ✅ Critical alerts stand out; routine states don't
+- Users understand what happened and why
+- Users know how to fix issues
+- No redundant messages or UI elements
+- Visual hierarchy matches functional importance
+- Related elements are visually grouped
+- Critical alerts stand out; routine states don't
 
 ## Next Steps
 

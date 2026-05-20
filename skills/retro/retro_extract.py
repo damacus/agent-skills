@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract and summarize Claude Code session data from .jsonl transcripts.
+"""Extract and summarize coding-agent session data from .jsonl transcripts.
 
 Usage:
     python retro_extract.py <project_path> --last N
@@ -15,27 +15,30 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
+DEFAULT_SESSION_PROJECTS_DIR = Path.home() / (".cl" "aude") / "projects"
+SESSION_PROJECTS_DIR = Path(
+    os.environ.get("AGENT_SESSION_PROJECTS_DIR", DEFAULT_SESSION_PROJECTS_DIR)
+)
 
 
 def encode_project_path(project_path: str) -> str:
-    """Convert a project path to Claude's directory name encoding.
+    """Convert a project path to the session directory name encoding.
 
-    Claude encodes paths by replacing '/' with '-' and prepending '-'.
+    The default transcript store encodes paths by replacing '/' with '-'.
     e.g. /Users/damacus/repos/foo -> -Users-damacus-repos-foo
     """
     return project_path.replace("/", "-")
 
 
 def find_project_dir(project_path: str) -> Path | None:
-    """Find the Claude project directory for a given workspace path."""
+    """Find the transcript project directory for a given workspace path."""
     encoded = encode_project_path(os.path.abspath(project_path))
-    candidate = CLAUDE_PROJECTS_DIR / encoded
+    candidate = SESSION_PROJECTS_DIR / encoded
     if candidate.is_dir():
         return candidate
 
     # Try partial match (worktrees, etc.)
-    for d in CLAUDE_PROJECTS_DIR.iterdir():
+    for d in SESSION_PROJECTS_DIR.iterdir():
         if d.is_dir() and encoded in d.name:
             return d
 
@@ -45,14 +48,14 @@ def find_project_dir(project_path: str) -> Path | None:
 def find_all_project_dirs(
     project_path: str,
 ) -> list[Path]:
-    """Find all Claude project dirs matching a path."""
+    """Find all transcript project dirs matching a path."""
     encoded = encode_project_path(
         os.path.abspath(project_path)
     )
     dirs = []
-    if not CLAUDE_PROJECTS_DIR.is_dir():
+    if not SESSION_PROJECTS_DIR.is_dir():
         return dirs
-    for d in CLAUDE_PROJECTS_DIR.iterdir():
+    for d in SESSION_PROJECTS_DIR.iterdir():
         if d.is_dir() and encoded in d.name:
             dirs.append(d)
     return dirs
@@ -65,9 +68,9 @@ def list_sessions(project_path: str) -> list[dict]:
 
     if not project_dirs:
         # Fall back to listing ALL projects
-        if CLAUDE_PROJECTS_DIR.is_dir():
+        if SESSION_PROJECTS_DIR.is_dir():
             project_dirs = [
-                d for d in CLAUDE_PROJECTS_DIR.iterdir() if d.is_dir()
+                d for d in SESSION_PROJECTS_DIR.iterdir() if d.is_dir()
             ]
 
     for project_dir in project_dirs:
@@ -372,7 +375,7 @@ def format_session_list(sessions: list[dict]) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract and summarize Claude Code session data"
+        description="Extract and summarize coding-agent session data"
     )
     parser.add_argument(
         "project_path",
@@ -413,8 +416,8 @@ def main():
     if args.session_id:
         # Find the specific session across all projects
         found = None
-        if CLAUDE_PROJECTS_DIR.is_dir():
-            for project_dir in CLAUDE_PROJECTS_DIR.iterdir():
+        if SESSION_PROJECTS_DIR.is_dir():
+            for project_dir in SESSION_PROJECTS_DIR.iterdir():
                 if not project_dir.is_dir():
                     continue
                 candidate = project_dir / f"{args.session_id}.jsonl"

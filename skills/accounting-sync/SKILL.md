@@ -67,17 +67,16 @@ The auth preflight is step zero because partial runs create noise: Gmail-only or
   - `paperless --output json search query '2171 4358'`
 
 ### 6. Upload to Paperless
-- In real mode, upload the verified PDF with vendor/year/company tags and the best document type.
-- Prefer existing Paperless IDs:
-  - `2026`: tag id 57
-  - `AI`: tag id 59
-  - `exafunction`: tag id 61
-  - `Webb Agile Solutions Ltd`: tag id 2
-  - `Invoice`: document type id 8
-  - `Receipt`: document type id 2
-  - `Webb Agile Solutions Ltd`: correspondent id 7
+- In real mode, upload the verified PDF with IDs resolved from the user's local Paperless instance.
+- Treat `references/vendors.json` as semantic configuration, not an ID registry:
+  - Use `default_paperless_profile` and `paperless_profiles` for shared user/work tags, such as `Work`.
+  - Use the vendor's `paperless_profile` to select those shared tags.
+  - Use `paperless_correspondent` for the document sender/vendor, falling back to `name` if it is absent.
+  - Use `paperless_tags` for vendor or domain tags, such as `anthropic`, `AI`, `DNS`, or `accounting`.
+  - Resolve every tag, correspondent, and document type name to the user's local Paperless IDs before upload.
+  - Do not assume numeric Paperless IDs are portable between users or instances.
 - Example:
-  - `paperless --output json document upload PDF_PATH --title 'TITLE' --type-id TYPE_ID --correspondent-id 7 --tag-id 57 --tag-id 59 --tag-id VENDOR_TAG --tag-id 2`
+  - `paperless --output json document upload PDF_PATH --title 'TITLE' --type-id TYPE_ID --correspondent-id VENDOR_CORRESPONDENT_ID --tag-id YEAR_TAG_ID --tag-id PROFILE_TAG_ID --tag-id VENDOR_TAG_ID`
 - If Paperless returns `database is locked`, wait briefly and retry once. If the retry also fails, stop and report the Paperless blocker without re-attaching the same receipt again.
 
 ### 7. Link Back to FreeAgent
