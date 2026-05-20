@@ -1,4 +1,7 @@
-# Common Products Reference
+# Common Product IDs
+
+Use this only to map a detected product name to the endoflife.date product ID.
+For API usage, read `eol-api.md`.
 
 ## Operating Systems
 
@@ -83,28 +86,3 @@
 | `amazon-eks`               | Amazon EKS               |
 | `azure-kubernetes-service` | Azure Kubernetes Service |
 | `google-kubernetes-engine` | Google Kubernetes Engine |
-
-## API Endpoints
-
-```text
-Base URL: https://endoflife.date/api/v1
-
-GET /products                     - List all products
-GET /products/{product}           - Get product details with all releases
-GET /products/{product}/releases/latest - Get latest release
-GET /products/{product}/releases/{cycle} - Get specific release cycle
-GET /categories                   - List categories
-GET /categories/{category}        - Products in category
-```
-
-## Response Fields
-
-Key fields in release cycle responses:
-
-- `name` - Release cycle name (e.g., "22.04")
-- `releaseDate` - Initial release date
-- `isEol` - Whether cycle is end-of-life
-- `eolFrom` - EOL date
-- `isLts` - Whether it's an LTS release
-- `latest.name` - Latest patch version
-- `isMaintained` - Whether still receiving updates
