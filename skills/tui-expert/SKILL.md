@@ -5,7 +5,35 @@ description: Expert guidance for building professional, responsive, and beautifu
 
 # TUI Expert
 
-This skill provides the architectural and aesthetic foundation for building world-class TUIs across Rust and Ruby ecosystems.
+This skill provides the architectural and aesthetic foundation for building world-class TUIs and agent-first CLIs across Rust, Ruby, Go, and other ecosystems.
+
+## Unified CLI/TUI Command Surface
+
+When a tool has both a CLI and a TUI, design the plain command as the first-class interface. The TUI is an explicit interactive mode, not the default path and not a replacement for a stable scriptable command surface.
+
+Use this command grammar for new tools:
+
+1. `<tool>` starts the default agent-first interaction.
+2. `<tool> tui` starts the full TUI.
+3. `<tool> <resource> <verb>` runs stable scriptable commands.
+4. `<tool> raw` provides a break-glass escape hatch for API-backed tools.
+5. `<tool> auth`, `<tool> completion`, and `<tool> version` remain explicit support commands.
+
+For API-backed CLIs, organize resources around predictable verbs:
+
+- Use `list`, `get`, `create`, `update`, and `delete` for core CRUD.
+- Add domain verbs only when they match user intent better than CRUD, such as `send`, `approve`, `transition`, or `attach-receipt`.
+- Prefer positional IDs for `get`, `update`, and `delete`; accept full URLs when the domain naturally exposes resources as URLs.
+- Keep support commands separate from domain resources so agents and users can discover the command tree quickly.
+
+Do not make `--json` the hidden agent path or a compatibility alias. Define a first-class output contract:
+
+- Human terminal output defaults to readable tables, summaries, and confirmations.
+- Agent and automation calls use a documented structured output path, such as `--format json`, `--output json`, or an explicit agent mode.
+- Long-running jobs and event streams use newline-delimited JSON, such as `--format ndjson`, with one complete JSON object per line.
+- Structured output must be stable, documented, and covered by tests.
+
+For a FreeAgent-style CLI, this means top-level API resources such as `contacts`, `invoices`, `bank`, `bills`, `projects`, `tasks`, and `users`; support commands such as `auth`, `raw`, `completion`, and `version`; and domain workflows such as invoice `send`, bank `approve`, resource `transition`, and receipt attachment.
 
 ## Core Architectural Pattern: The "Orchestrated State"
 
@@ -53,6 +81,17 @@ Practical guidance:
 - Prefer side panels or inspectors for drilldown when space allows.
 - Keep keyboard shortcuts consistent across apps so users do not relearn the same actions.
 - Build one polished shared layout first, then let each app supply only its domain data and screen-specific widgets.
+
+## Text Input and Hotkeys
+
+Text input focus must override global printable-key hotkeys. When a search box, command palette, URL field, or free-form editor is focused, printable keys are inserted into the input instead of being handled as global actions.
+
+Required behavior:
+
+- Global hotkeys such as `a`, `c`, `q`, `/`, and `?` only fire outside text-entry mode, unless combined with an explicit modifier such as `Ctrl`.
+- `Esc` exits input mode or clears focus before returning to normal navigation.
+- `Ctrl+C` or the configured emergency quit remains available even while editing text.
+- Tests must cover typing words that contain hotkey letters, such as `query`, `account`, and URL-like strings.
 
 ## Global TUI Aesthetics (The "Beautiful TUI" Checklist)
 
