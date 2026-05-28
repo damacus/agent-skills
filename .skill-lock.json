@@ -15,9 +15,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/odyssey4me/agent-skills.git",
       "skillPath": "skills/gmail/SKILL.md",
-      "skillFolderHash": "ffa91d8907cbd2b349e25dc17d03127c14731d86",
+      "skillFolderHash": "b2ad44aae0fa7ea76a31135475741170ac9baac0",
       "installedAt": "2026-02-10T21:37:33.751Z",
-      "updatedAt": "2026-04-27T10:46:00.523Z"
+      "updatedAt": "2026-05-20T13:59:55.716Z"
     },
     "paperless-search": {
       "source": "nicolaischmid/agent-skills",
@@ -42,54 +42,54 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/jeffallan/claude-skills.git",
       "skillPath": "skills/security-reviewer/SKILL.md",
-      "skillFolderHash": "c18236ee914c1de8a3d83a3d503af579b2aa7f16",
+      "skillFolderHash": "4785ccbfb6ee8c2fdc9af3a2746c58b09da5d6a7",
       "installedAt": "2026-02-20T14:32:12.886Z",
-      "updatedAt": "2026-04-27T10:46:04.617Z"
+      "updatedAt": "2026-05-20T13:59:58.601Z"
     },
     "playwright-cli": {
       "source": "microsoft/playwright-cli",
       "sourceType": "github",
       "sourceUrl": "https://github.com/microsoft/playwright-cli.git",
       "skillPath": "skills/playwright-cli/SKILL.md",
-      "skillFolderHash": "e065db5c5c0a7b197cdbcb1e70c9b374f80a7c91",
+      "skillFolderHash": "7f1be9aef5c4435ed99dc74a383ca814d05c82c5",
       "installedAt": "2026-02-26T14:25:09.294Z",
-      "updatedAt": "2026-04-27T10:46:06.408Z"
+      "updatedAt": "2026-05-20T14:00:00.290Z"
     },
     "web-quality-audit": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/web-quality-audit/SKILL.md",
-      "skillFolderHash": "6a9eb661cd83a05c16e5ef41bbc4e23d4b0692f3",
+      "skillFolderHash": "a927159d150e7681018cfb1eebefa8a2c951c5fb",
       "installedAt": "2026-03-04T00:11:51.418Z",
-      "updatedAt": "2026-03-04T00:11:51.418Z"
+      "updatedAt": "2026-05-20T14:00:01.733Z"
     },
     "accessibility": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/accessibility/SKILL.md",
-      "skillFolderHash": "610035b217cff3f6e63b4d9edfe1e113ecebf5f6",
+      "skillFolderHash": "abdb452337317f5840e4298e46ad07663342dbe8",
       "installedAt": "2026-03-04T00:12:32.983Z",
-      "updatedAt": "2026-04-27T10:46:07.965Z"
+      "updatedAt": "2026-05-20T14:00:03.415Z"
     },
     "core-web-vitals": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/core-web-vitals/SKILL.md",
-      "skillFolderHash": "6c8ba65254a5228e366901005befb9df7f1bbd96",
+      "skillFolderHash": "041da568684b2b15ccb8789253dd2df29c8de433",
       "installedAt": "2026-03-04T00:13:03.141Z",
-      "updatedAt": "2026-03-04T00:14:57.641Z"
+      "updatedAt": "2026-05-20T14:00:05.964Z"
     },
     "best-practices": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/best-practices/SKILL.md",
-      "skillFolderHash": "342875cc524913c55d9aff098d5569ed1fac820a",
+      "skillFolderHash": "31953d33750e2be4444cf4f0bb8b2fd386116d50",
       "installedAt": "2026-03-04T00:13:59.738Z",
-      "updatedAt": "2026-03-04T00:13:59.738Z"
+      "updatedAt": "2026-05-20T14:00:07.364Z"
     },
     "doc-coauthoring": {
       "source": "anthropics/skills",
@@ -109,6 +109,258 @@
       "skillFolderHash": "3f7bbeeeff81348c91d5f451e962bf3c41708ebc",
       "installedAt": "2026-04-14T19:28:30.976Z",
       "updatedAt": "2026-04-14T19:28:48.837Z"
+    },
+    "accounting-sync": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/operations/accounting-sync/SKILL.md",
+      "skillFolderHash": "b38b23d3f3d543e3e75dcdc1e57546b6a775f194",
+      "installedAt": "2026-05-20T13:59:07.127Z",
+      "updatedAt": "2026-05-20T14:02:51.851Z"
+    },
+    "go-optimizer": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/engineering/go-optimizer/SKILL.md",
+      "skillFolderHash": "94c118e7228097a18777cff69e6ca12850ad1a51",
+      "installedAt": "2026-05-20T14:02:51.840Z",
+      "updatedAt": "2026-05-20T14:02:51.840Z"
+    },
+    "postgresql-rails-analyzer": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/engineering/postgresql-rails-analyzer/SKILL.md",
+      "skillFolderHash": "105742e618af3a11705d6900dc18d1941c8844ee",
+      "installedAt": "2026-05-20T14:02:51.843Z",
+      "updatedAt": "2026-05-20T14:02:51.843Z"
+    },
+    "review-ruby-code": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/engineering/review-ruby-code/SKILL.md",
+      "skillFolderHash": "75e963da893826dcde93eddc9909ea7f4030360b",
+      "installedAt": "2026-05-20T14:02:51.844Z",
+      "updatedAt": "2026-05-20T14:02:51.844Z"
+    },
+    "sandi-metz-reviewer": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/engineering/sandi-metz-reviewer/SKILL.md",
+      "skillFolderHash": "3f7ef551930f7357cee108f83a4a97fc24dc5a44",
+      "installedAt": "2026-05-20T14:02:51.845Z",
+      "updatedAt": "2026-05-20T14:02:51.845Z"
+    },
+    "simplecov": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/engineering/simplecov/SKILL.md",
+      "skillFolderHash": "0d87ea17833bfee0a6d05f308542ca3abffe8538",
+      "installedAt": "2026-05-20T14:02:51.846Z",
+      "updatedAt": "2026-05-20T14:02:51.846Z"
+    },
+    "design-patterns-ruby": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/design-patterns-ruby/SKILL.md",
+      "skillFolderHash": "33da35dbbbe301d86faac80c334720c97a2ae600",
+      "installedAt": "2026-05-20T14:02:51.846Z",
+      "updatedAt": "2026-05-20T14:02:51.846Z"
+    },
+    "fish-shell": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/fish-shell/SKILL.md",
+      "skillFolderHash": "6667e0aa3a68ddd375880ad994902d9625772664",
+      "installedAt": "2026-05-20T14:02:51.846Z",
+      "updatedAt": "2026-05-20T14:02:51.846Z"
+    },
+    "rails": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/rails/SKILL.md",
+      "skillFolderHash": "08cbe7acabf180b00a7658ae6d77f3f0298ab395",
+      "installedAt": "2026-05-20T14:02:51.847Z",
+      "updatedAt": "2026-05-20T14:02:51.847Z"
+    },
+    "rspec": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/rspec/SKILL.md",
+      "skillFolderHash": "2fa83e45dc835c1dce2828221db26e04ce277a1c",
+      "installedAt": "2026-05-20T14:02:51.848Z",
+      "updatedAt": "2026-05-20T14:02:51.848Z"
+    },
+    "rubocop": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/rubocop/SKILL.md",
+      "skillFolderHash": "c403e4920f8d2608d29ec9943d747ed438038de9",
+      "installedAt": "2026-05-20T14:02:51.849Z",
+      "updatedAt": "2026-05-20T14:02:51.849Z"
+    },
+    "ruby": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/ruby/SKILL.md",
+      "skillFolderHash": "d9b804588ff8fefa2ccb07d5a55e96d7cb060f71",
+      "installedAt": "2026-05-20T14:02:51.849Z",
+      "updatedAt": "2026-05-20T14:02:51.849Z"
+    },
+    "ruby-lsp": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/ruby-lsp/SKILL.md",
+      "skillFolderHash": "745062b77ed9a3571ec06792214565c3080f8ca9",
+      "installedAt": "2026-05-20T14:02:51.850Z",
+      "updatedAt": "2026-05-20T14:02:51.850Z"
+    },
+    "rubycritic": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/language/rubycritic/SKILL.md",
+      "skillFolderHash": "5cef4d342d28896c2e1973f1cc0030f330430e0e",
+      "installedAt": "2026-05-20T14:02:51.850Z",
+      "updatedAt": "2026-05-20T14:02:51.850Z"
+    },
+    "alert-investigator": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/operations/alert-investigator/SKILL.md",
+      "skillFolderHash": "f0f8eb584c2fbedd6e1980d5338373a660a282f8",
+      "installedAt": "2026-05-20T14:02:51.851Z",
+      "updatedAt": "2026-05-20T14:02:51.851Z"
+    },
+    "chef-custom-resources": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/operations/chef-custom-resources/SKILL.md",
+      "skillFolderHash": "2be68229e3c9cedd8a32d2c92978ff894dd87545",
+      "installedAt": "2026-05-20T14:02:51.851Z",
+      "updatedAt": "2026-05-20T14:02:51.851Z"
+    },
+    "failing-deployments": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/operations/failing-deployments/SKILL.md",
+      "skillFolderHash": "29b976ac6f99b398bd43f1fe7d02d5598fc588bf",
+      "installedAt": "2026-05-20T14:02:51.852Z",
+      "updatedAt": "2026-05-20T14:02:51.852Z"
+    },
+    "modernize": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/operations/modernize/SKILL.md",
+      "skillFolderHash": "e20a90a83d1d00ae7846dd766ffa4ec28d83898e",
+      "installedAt": "2026-05-20T14:02:51.852Z",
+      "updatedAt": "2026-05-20T14:02:51.852Z"
+    },
+    "storyboard": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/productivity/storyboard/SKILL.md",
+      "skillFolderHash": "aa003e6418f69ab8e990a9973e5815c391ec0c7f",
+      "installedAt": "2026-05-20T14:02:51.852Z",
+      "updatedAt": "2026-05-20T14:02:51.852Z"
+    },
+    "translator": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/productivity/translator/SKILL.md",
+      "skillFolderHash": "386c474b31cdff0310da0108336e39569cf03b65",
+      "installedAt": "2026-05-20T14:02:51.853Z",
+      "updatedAt": "2026-05-20T14:02:51.853Z"
+    },
+    "tui-expert": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/tui/tui-expert/SKILL.md",
+      "skillFolderHash": "272fb3b3941bc9aea8db74713ebd9c16040b5a79",
+      "installedAt": "2026-05-20T14:02:51.853Z",
+      "updatedAt": "2026-05-20T14:02:51.853Z"
+    },
+    "ui-professional": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/ui/ui-professional/SKILL.md",
+      "skillFolderHash": "65d706108b49ebded2582a386918ec868669e96d",
+      "installedAt": "2026-05-20T14:02:51.853Z",
+      "updatedAt": "2026-05-20T14:02:51.853Z"
+    },
+    "github-pr": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/workflow/github-pr/SKILL.md",
+      "skillFolderHash": "c6505ae5c867090b5f4dbb040c612af164fe5fa0",
+      "installedAt": "2026-05-20T14:02:51.854Z",
+      "updatedAt": "2026-05-20T14:02:51.854Z"
+    },
+    "retro": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/workflow/retro/SKILL.md",
+      "skillFolderHash": "132ce6b7bad45e68b04fcea5b7517a2631c02228",
+      "installedAt": "2026-05-20T14:02:51.854Z",
+      "updatedAt": "2026-05-20T14:02:51.854Z"
+    },
+    "screenshot-github": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "skillPath": "skills/workflow/screenshot-github/SKILL.md",
+      "skillFolderHash": "c6cde9f5bf3a8a6f5a74edc68afde6a151c9a4bf",
+      "installedAt": "2026-05-20T14:02:51.854Z",
+      "updatedAt": "2026-05-20T14:02:51.854Z"
+    },
+    "golang-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/affaan-m/everything-claude-code.git",
+      "skillPath": "skills/golang-patterns/SKILL.md",
+      "skillFolderHash": "1f85aa91c8e9e901953ad3215c826f2a31a5b6e3",
+      "installedAt": "2026-05-26T07:05:05.059Z",
+      "updatedAt": "2026-05-26T07:05:05.059Z"
+    },
+    "golang-code-style": {
+      "source": "samber/cc-skills-golang",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/samber/cc-skills-golang.git",
+      "skillPath": "skills/golang-code-style/SKILL.md",
+      "skillFolderHash": "8f538e321df453a4269af3bb64e562aa08fe72a7",
+      "installedAt": "2026-05-26T07:11:56.432Z",
+      "updatedAt": "2026-05-26T14:47:54.466Z"
+    },
+    "golang-design-patterns": {
+      "source": "samber/cc-skills-golang",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/samber/cc-skills-golang.git",
+      "skillPath": "skills/golang-design-patterns/SKILL.md",
+      "skillFolderHash": "c1f10a4194b92c15524404c8538a0960e9c6f5d6",
+      "installedAt": "2026-05-26T14:48:52.112Z",
+      "updatedAt": "2026-05-26T14:48:52.112Z"
     }
   },
   "dismissed": {
@@ -121,13 +373,13 @@
     "codex",
     "cursor",
     "deepagents",
+    "dexto",
     "firebender",
     "gemini-cli",
     "github-copilot",
     "kimi-cli",
     "opencode",
     "warp",
-    "claude-code",
     "windsurf"
   ]
 }
