@@ -326,15 +326,6 @@
       "installedAt": "2026-05-20T14:02:51.854Z",
       "updatedAt": "2026-05-20T14:02:51.854Z"
     },
-    "screenshot-github": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/workflow/screenshot-github/SKILL.md",
-      "skillFolderHash": "c6cde9f5bf3a8a6f5a74edc68afde6a151c9a4bf",
-      "installedAt": "2026-05-20T14:02:51.854Z",
-      "updatedAt": "2026-05-20T14:02:51.854Z"
-    },
     "golang-patterns": {
       "source": "affaan-m/everything-claude-code",
       "sourceType": "github",
@@ -361,6 +352,15 @@
       "skillFolderHash": "c1f10a4194b92c15524404c8538a0960e9c6f5d6",
       "installedAt": "2026-05-26T14:48:52.112Z",
       "updatedAt": "2026-05-26T14:48:52.112Z"
+    },
+    "slack-messaging": {
+      "source": "anthropics/knowledge-work-plugins",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/knowledge-work-plugins.git",
+      "skillPath": "partner-built/slack/skills/slack-messaging/SKILL.md",
+      "skillFolderHash": "d58fc568b025a5407ed6a7e6b738adc9a78db20a",
+      "installedAt": "2026-06-22T07:49:36.613Z",
+      "updatedAt": "2026-06-22T07:49:36.613Z"
     }
   },
   "dismissed": {
@@ -369,17 +369,16 @@
   "lastSelectedAgents": [
     "amp",
     "antigravity",
+    "antigravity-cli",
     "cline",
     "codex",
     "cursor",
     "deepagents",
-    "dexto",
-    "firebender",
     "gemini-cli",
     "github-copilot",
-    "kimi-cli",
+    "kimi-code-cli",
     "opencode",
     "warp",
-    "windsurf"
+    "zed"
   ]
 }

@@ -3,7 +3,6 @@ name: fish-shell
 description: >
   Fish shell scripting reference and enforcement. Activate whenever executing shell commands,
   writing shell scripts, using run_command, or any shell interaction in the user's environment.
-  The user's shell is fish — never use bash/zsh/POSIX syntax in interactive commands.
   Trigger on: any shell command, heredoc, string manipulation, variable assignment, loop,
   conditional, arithmetic, pipe, or script writing.
 ---

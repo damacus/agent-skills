@@ -4,7 +4,7 @@
 
 - [Required Directory Layout](#required-directory-layout)
 - [metadata.rb](#metadatarb)
-- [Berksfile](#berksfile)
+- [Policyfile.rb](#policyfilerb)
 - [kitchen.yml](#kitchenyml)
 - [kitchen.dokken.yml](#kitchendokkenyml)
 - [kitchen.global.yml](#kitchenglobalyml)
@@ -50,8 +50,8 @@
 │           ├── inspec.yml
 │           └── controls/
 │               └── smoke_spec.rb
-├── LIMITATIONS.md                    # Platform/arch limitations
-├── Berksfile
+├── AGENTS.md                         # Research findings, limitations, and agent guidance
+├── Policyfile.rb
 ├── chefignore
 ├── kitchen.yml                       # Suites + Vagrant driver
 ├── kitchen.dokken.yml                # Dokken driver + platforms (CI)
@@ -100,22 +100,37 @@ Key rules:
 
 - `chef_version '>= 15.3'` minimum for `unified_mode` support
 - Only list platforms actually tested and supported
-- Cross-reference with `LIMITATIONS.md` for vendor support
+- Cross-reference with `AGENTS.md` for vendor support, limitations, and implementation decisions
 - Add `depends` for any cookbook dependencies
 
-## Berksfile
+## Policyfile.rb
 
 ```ruby
 # frozen_string_literal: true
 
-source 'https://supermarket.chef.io'
+name '<cookbook>'
+default_source :supermarket
 
-metadata
+run_list 'test::default'
 
-group :integration do
-  cookbook 'test', path: 'test/cookbooks/test'
+cookbook '<cookbook>', path: '.'
+cookbook 'test', path: './test/cookbooks/test'
+
+Dir.entries('./test/cookbooks/test/recipes').select { |f| !File.directory? f }.each do |test|
+  test = test.delete_suffix('.rb')
+  named_run_list :"#{test}", "test::#{test}"
 end
 ```
+
+Key rules:
+
+- Prefer `Policyfile.rb` over `Berksfile` for new custom-resource migrations and modernizations.
+- Remove stale `Berksfile` and Berkshelf references unless the repository has an explicit
+  compatibility reason to keep them.
+- Resolve dependencies with `chef install Policyfile.rb`.
+- Use `require 'chefspec/policyfile'` in ChefSpec setup.
+- Treat sous-chefs/lvm#304 as the reference pattern for replacing Berkshelf with Policyfiles during
+  custom-resource modernization.
 
 ## kitchen.yml
 
@@ -288,7 +303,7 @@ suite-specific Kitchen files.
 .rubocop_cache/
 *.swp
 *~
-Berksfile.lock
+Policyfile.lock.json
 spec/
 test/
 .windsurf/

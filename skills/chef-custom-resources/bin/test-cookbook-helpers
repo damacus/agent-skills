@@ -135,7 +135,7 @@ function test_check_structure_valid
     setup_fixture
     # Create a minimal valid structure
     mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default/controls" "$FIXTURE_DIR/test/cookbooks/test/recipes" "$FIXTURE_DIR/libraries"
-    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Policyfile.rb" "$FIXTURE_DIR/AGENTS.md" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
 
     # Create a resource with required headers
     write_file "$FIXTURE_DIR/resources/my_resource.rb" \
@@ -163,6 +163,8 @@ function test_check_structure_valid
     set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
     assert_exit 0 $status "valid cookbook exits 0"
     assert_contains "$out" "✓ metadata.rb" "finds metadata.rb"
+    assert_contains "$out" "✓ Policyfile.rb" "finds Policyfile.rb"
+    assert_contains "$out" "✓ AGENTS.md" "finds AGENTS.md"
     assert_contains "$out" "✓ resources/" "finds resources/"
     assert_contains "$out" "✓ default integration test suite" "finds default suite"
     assert_contains "$out" "all Ruby files have frozen_string_literal" "frozen_string_literal ok"
@@ -174,7 +176,7 @@ function test_check_structure_banned_dirs
     echo "== check-structure (banned dirs) =="
     setup_fixture
     mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default" "$FIXTURE_DIR/test/cookbooks/test/recipes" "$FIXTURE_DIR/recipes" "$FIXTURE_DIR/attributes"
-    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Policyfile.rb" "$FIXTURE_DIR/AGENTS.md" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
 
     set -l out ($HELPER check-structure "$FIXTURE_DIR" 2>&1)
     assert_contains "$out" "should not exist: recipes/" "detects banned recipes/"
@@ -186,7 +188,7 @@ function test_check_structure_missing_frozen
     echo "== check-structure (missing frozen_string_literal) =="
     setup_fixture
     mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default" "$FIXTURE_DIR/test/cookbooks/test/recipes"
-    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Policyfile.rb" "$FIXTURE_DIR/AGENTS.md" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
 
     write_file "$FIXTURE_DIR/resources/bad.rb" \
         "provides :bad" \
@@ -201,7 +203,7 @@ function test_check_structure_missing_unified
     echo "== check-structure (missing unified_mode) =="
     setup_fixture
     mkdir -p "$FIXTURE_DIR/resources" "$FIXTURE_DIR/spec" "$FIXTURE_DIR/test/integration/default" "$FIXTURE_DIR/test/cookbooks/test/recipes"
-    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Berksfile" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
+    touch "$FIXTURE_DIR/metadata.rb" "$FIXTURE_DIR/Policyfile.rb" "$FIXTURE_DIR/AGENTS.md" "$FIXTURE_DIR/kitchen.yml" "$FIXTURE_DIR/kitchen.dokken.yml" "$FIXTURE_DIR/chefignore" "$FIXTURE_DIR/README.md"
 
     write_file "$FIXTURE_DIR/resources/bad.rb" \
         "# frozen_string_literal: true" \

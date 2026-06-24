@@ -1,6 +1,7 @@
 # Research Phase
 
-Research the product's installation options, platform support, and limitations before writing any code.
+Research the product's installation options, platform support, implementation constraints, and
+agent-facing findings before writing any code.
 
 ## Steps
 
@@ -32,7 +33,7 @@ If the product can be built from source, note:
 - Any platform-specific patches or configure flags
 - Minimum supported versions of build tools
 
-### 4. Note Limitations
+### 4. Note Limitations and Implementation Findings
 
 Document any restrictions discovered:
 
@@ -40,6 +41,8 @@ Document any restrictions discovered:
 - Platform gaps (e.g. "no official SUSE packages")
 - Version constraints (e.g. "version 8.4 only available on Debian 13+")
 - EOL versions that should not be supported
+- Runtime constraints that affect Kitchen/CI driver choice
+- Non-obvious implementation decisions, migration risks, or maintainer guidance future agents need
 
 ### 5. Cross-Reference with metadata.rb
 
@@ -49,12 +52,25 @@ Compare vendor support with the cookbook's `supports` declarations in `metadata.
 - Platforms supported by the vendor but missing from `metadata.rb`
 - Version ranges that need tightening
 
-## LIMITATIONS.md Template
+## AGENTS.md Template
 
-Write `LIMITATIONS.md` at the cookbook root using this format:
+Write `AGENTS.md` at the cookbook root using this format. This file replaces `LIMITATIONS.md` and
+must include both product limitations and non-obvious implementation findings. If a cookbook already
+has `LIMITATIONS.md`, merge that information into `AGENTS.md` and remove the separate limitations
+file during modernization.
 
 ```markdown
-# Limitations
+# AGENTS.md
+
+## Cookbook Purpose
+
+Briefly describe the product/domain this cookbook manages and the intended custom-resource API.
+
+## Agent Findings
+
+- Capture important findings that are not obvious from public docs or the current repository.
+- Record owner decisions, migration tradeoffs, compatibility choices, and known risky areas.
+- Link to relevant upstream docs, issues, or Sous-Chefs PRs when they explain a decision.
 
 ## Package Availability
 
@@ -91,6 +107,14 @@ Write `LIMITATIONS.md` at the cookbook root using this format:
 ## Known Issues
 
 - Brief description of any known issues affecting cookbook behavior
+
+## Test and CI Notes
+
+- State whether Dokken, Vagrant, exec, or Windows runners are appropriate and why.
+- Document any suites that must be manual or opt-in because they affect networking, kernel modules,
+  host services, or external APIs.
 ```
 
-The file should be factual, concise, and usable as instructions by both humans and AI agents.
+The file should be factual, concise, and usable as instructions by both humans and AI agents. It
+should not duplicate information that is trivially discoverable from `metadata.rb`, Kitchen files, or
+README resource examples unless that information supports a decision or limitation.

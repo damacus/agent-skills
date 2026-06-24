@@ -6,8 +6,7 @@ description: >
   migrating legacy library-based resources to modern resources/, fixing CI failures in a
   sous-chefs cookbook, adding ChefSpec or InSpec tests, restructuring cookbook directories,
   writing resource documentation, converting sysvinit/upstart to systemd, or when the user
-  mentions "custom resource", "chef resource", "sous-chefs cookbook", "fix cookbook CI",
-  "cookbook structure", or "chef cookbook".
+  mentions "custom resource", "chef resource", "sous-chefs cookbook" or "chef cookbook".
 ---
 
 # Chef Custom Resources
@@ -31,7 +30,18 @@ Execute these phases in order. Read the referenced file before starting each pha
 - **No silent scope downgrades**: If the cookbook is too large, risky, or messy to follow the structural rules in the chosen scope, stop and ask the user how to proceed. Do not quietly switch to an in-place or partial refactor
 - **Every phase needs explicit evidence**: At the end of each phase, output a markdown checklist for that phase's "Done when" items and state how each item was verified in the current session (for example `ls`, `rg`, `cat`, `cookstyle`, `chef exec rspec`, `kitchen test`)
 - **Verification gates action**: You MUST NOT invoke `@github-pr` until the outputs of `cookstyle`, `chef exec rspec`, and `kitchen test` have been shown in the current session
+- **Kitchen log monitoring, not stream dumping**: For long `kitchen test` runs, do not blindly
+  stream or repeatedly tail raw stdout/stderr. Treat Kitchen output as an artifact: write a named
+  run log, poll high-signal Kitchen/Chef/InSpec markers, and inspect `.kitchen/logs/<instance>.log`
+  or the captured run log only around the first failure marker.
 - **Structural audit before PR**: Before proposing or opening a PR, run a final structural audit and report the results, including `ls -R` output and confirmation that `recipes/` and `attributes/` are absent when the scope is Full Migration
+- **Policyfile-first dependency management**: New migrations and modernizations should use `Policyfile.rb`
+  instead of `Berksfile` unless the repository already has a deliberate reason to keep Berkshelf.
+  Treat sous-chefs/lvm#304 as the reference pattern: add `Policyfile.rb`, remove obsolete
+  `Berksfile` usage, update ChefSpec to Policyfile support, and keep Kitchen/CI aligned.
+- **AGENTS.md captures findings**: Research, limitations, platform support, implementation notes,
+  and agent-facing decisions belong in `AGENTS.md` at the cookbook root. Do not create
+  `LIMITATIONS.md`; migrate any existing limitations content into `AGENTS.md`.
 
 ### Phase -1: Read-only Triage
 
@@ -101,15 +111,19 @@ Read [references/research-phase.md](references/research-phase.md).
 2. Web-search vendor repositories for supported platforms and architectures
 3. Note package availability per platform (apt vs dnf/yum)
 4. Check for compiled/source installation requirements
-5. Output findings to `LIMITATIONS.md` at the cookbook root
+5. Output findings, platform support, implementation constraints, and agent-facing decisions to
+   `AGENTS.md` at the cookbook root
 
-**Done when:** `LIMITATIONS.md` exists at cookbook root with vendor platform/arch data.
+**Done when:** `AGENTS.md` exists at cookbook root with vendor platform/arch data, limitations,
+implementation notes, and any owner decisions that future maintainers or agents need.
 
 **Report before moving on:**
 
-- [ ] `LIMITATIONS.md` exists at cookbook root
+- [ ] `AGENTS.md` exists at cookbook root
 - [ ] Vendor platform and architecture support is captured
 - [ ] Package/source-install constraints are captured
+- [ ] Implementation notes and decisions are captured, including context that is not obvious from
+      public vendor docs or repository files
 
 ### Phase 2: Structure
 
@@ -117,13 +131,15 @@ Read [references/cookbook-structure.md](references/cookbook-structure.md).
 
 Verify or create the required directory layout. Fix any structural issues.
 
-**Done when:** Directory layout matches the reference, `metadata.rb` has correct `chef_version` and `supports`, `Berksfile` resolves cleanly (`berks install` exits 0), and any legacy `recipes/` or `attributes/` directories are removed (if full migration scope).
+**Done when:** Directory layout matches the reference, `metadata.rb` has correct `chef_version` and
+`supports`, `Policyfile.rb` resolves cleanly (`chef install Policyfile.rb` exits 0), and any legacy
+`recipes/` or `attributes/` directories are removed (if full migration scope).
 
 **Report before moving on:**
 
 - [ ] Directory layout matches the reference
 - [ ] `metadata.rb` has correct `chef_version` and `supports`
-- [ ] `Berksfile` resolves cleanly
+- [ ] `Policyfile.rb` resolves cleanly
 - [ ] `recipes/` is removed if Full Migration
 - [ ] `attributes/` is removed if Full Migration
 
@@ -133,7 +149,7 @@ Verify all supported platforms are current using [endoflife.date](https://endofl
 
 1. Check each platform in `metadata.rb` `supports` declarations against endoflife.date
 2. Remove EOL platforms (e.g. Ubuntu 20.04, Debian 11, openSUSE Leap 15.5)
-3. Add newly current platforms if vendor supports them (cross-reference with `LIMITATIONS.md`)
+3. Add newly current platforms if vendor supports them (cross-reference with `AGENTS.md`)
 4. Update platform lists in **all** kitchen files — `kitchen.yml`, `kitchen.dokken.yml`, and CI matrix in `.github/workflows/ci.yml`
 5. **CI vs Local Strategy**:
     - **Default**: Use `kitchen.dokken.yml` (Docker) for both CI and local testing.
@@ -156,7 +172,7 @@ Verify all supported platforms are current using [endoflife.date](https://endofl
 
 - [ ] No EOL platforms remain in `metadata.rb`
 - [ ] `kitchen.yml`, `kitchen.dokken.yml`, and CI matrix list the same platforms
-- [ ] Platform changes are consistent with `LIMITATIONS.md`
+- [ ] Platform changes are consistent with `AGENTS.md`
 - [ ] CI driver strategy (Dokken vs Exec) aligns with local hypervisor requirements
 
 ### Phase 2c: sous-chefs CI Baseline
@@ -287,6 +303,51 @@ kitchen test default-ubuntu-2404 --destroy=always
 
 The suite must converge idempotently (two converges, zero updated resources on second) and all InSpec controls must pass. Fix any failures before moving on.
 
+For matrix or long-running suites, use artifact-based monitoring instead of raw log streaming:
+
+```fish
+set -l suite default
+set -l run_log /private/tmp/kitchen-$suite.log
+set -gx KITCHEN_LOCAL_YAML kitchen.dokken.yml
+
+set -l fail_signals
+set -a fail_signals '>>>>>>'
+set -a fail_signals 'Kitchen failed'
+set -a fail_signals 'Converge failed'
+set -a fail_signals 'Verify failed'
+set -a fail_signals 'Infra Phase failed'
+set -a fail_signals 'ERROR: Running exception handlers'
+set -a fail_signals 'FATAL'
+set -a fail_signals 'Test Summary: .* [1-9][0-9]* failures'
+set -a fail_signals 'Profile Summary: .* [1-9][0-9]* control failure'
+
+set -l success_signals
+set -a success_signals 'Finished testing <'
+set -a success_signals 'Infra Phase complete, 0/[0-9]+ resources updated'
+set -a success_signals 'Profile Summary: .* 0 control failures'
+set -a success_signals 'Test Summary: .* 0 failures'
+set -a success_signals 'Test Kitchen is finished'
+
+set -l fail_pattern (string join '|' $fail_signals)
+set -l success_pattern (string join '|' $success_signals)
+
+kitchen test $suite --destroy=always >$run_log 2>&1 &
+set -l kitchen_pid $last_pid
+
+while kill -0 $kitchen_pid 2>/dev/null
+    rg --text -n $fail_pattern $run_log | tail -n 20
+    rg --text -n $success_pattern $run_log | tail -n 20
+    sleep 60
+end
+wait $kitchen_pid
+set -l kitchen_rc $status
+```
+
+Use the exit code as authoritative. If it fails, inspect the first failure marker plus nearby context
+from the run log and, when present, `.kitchen/logs/<instance>.log`. Do not grep broadly for
+`ERROR`, `failed`, or kernel noise; Chef templates, comments, and system logs often contain those
+strings without indicating a failed converge or verify.
+
 **Done when:** At least one suite passes `kitchen test` with idempotent convergence and all InSpec controls green.
 
 **Report before moving on:**
@@ -341,6 +402,27 @@ If the user confirms, invoke the `@github-pr` skill to create the PR.
 ## Rules
 
 - **CI triage for active runs**: When diagnosing a GitHub Actions failure that is still `in_progress`, do not rely on `gh run view ... --log`; it often withholds logs until the run completes. Use `bin/gh-ci-job-logs <run-url-or-id>` to fetch raw job logs via `gh api` instead
+- **Kitchen success signals**: Prefer these markers when summarizing local Kitchen progress:
+  `Infra Phase complete, 0/<n> resources updated` for idempotent second converge,
+  `Finished converging <instance>`, `Profile Summary: ... 0 control failures`,
+  `Test Summary: ... 0 failures`, `Finished verifying <instance>`, and
+  `Test Kitchen is finished`.
+- **Kitchen failure signals**: Prefer these markers for early failure detection:
+  `>>>>>>`, `Kitchen failed`, `Converge failed`, `Verify failed`, `Infra Phase failed`,
+  `ERROR: Running exception handlers`, `FATAL`, Ruby/Chef exception class names,
+  `Profile Summary: ... <n> control failure`, `Test Summary: ... <n> failures`,
+  InSpec `×` assertion lines, and `expected ... got:` blocks.
+- **Kitchen log artifacts**: Check `.kitchen/logs/<instance>.log` for instance-level Kitchen logs,
+  but remember some drivers keep the full converge/verify transcript only in the process output.
+  If capturing process output, use a named log file such as `/private/tmp/kitchen-<suite>.log` and
+  report concise success/failure summaries instead of dumping tails by default.
+- **Policyfiles over Berkshelf**: Prefer `Policyfile.rb` for dependency resolution and ChefSpec
+  setup. Remove stale `Berksfile`/Berkshelf references during modernization unless the repository
+  has an explicit compatibility reason to keep them.
+- **AGENTS.md over LIMITATIONS.md**: Store product research, platform support, limitations,
+  implementation findings, CI decisions, and non-obvious maintainer/agent guidance in `AGENTS.md`.
+  If `LIMITATIONS.md` exists, merge it into `AGENTS.md` and remove the separate limitations file
+  during modernization.
 - **Check Kitchen instance normalization**: If CI says `No instances for regex ...`, compare the workflow-generated instance names with `kitchen list`. Ubuntu instances are commonly normalized from `ubuntu-22.04` / `ubuntu-24.04` to `ubuntu-2204` / `ubuntu-2404`
 - **TDD**: Write failing test first, then implement
 - **Scope confirmation before edits**: Never modify files before the user explicitly confirms Full Migration or Incremental Modernization
