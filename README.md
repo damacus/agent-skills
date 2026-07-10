@@ -25,7 +25,11 @@ This repository is the source for the skills under [`skills/`](./skills). It is 
 
 Each skill is self-contained. The contract is simple: if a tool or agent knows how to discover `SKILL.md` files, it can use this repo as a skill source.
 
-## Notable Skill
+## Notable Skills
+
+[`skills/ruby`](./skills/ruby) is the single entry point for Ruby ecosystem work. It discovers the repository's framework and tooling before routing to focused guidance for Rails, RSpec, Minitest, Cucumber, SimpleCov, RuboCop, RubyCritic, PostgreSQL, typing, security, and related workflows.
+
+The standalone consulting skills under folders such as [`skills/standup`](./skills/standup), [`skills/prior-art`](./skills/prior-art), and [`skills/test-driven-development`](./skills/test-driven-development) adapt complementary workflows from Thoughtbot's Rails Consultant project. They are agent-neutral and deliberately remain separate from the Ruby router.
 
 [`skills/retro`](./skills/retro) provides a retrospective workflow for reviewing recent coding sessions and improving skills, agents, and workflows. Its helper script, [`skills/retro/retro_extract.py`](./skills/retro/retro_extract.py), currently parses Claude Code-style `.jsonl` session transcripts from `~/.claude/projects`.
 
@@ -41,6 +45,8 @@ How you install these skills depends on the agent framework you use, but the com
 
 This repo does not currently include a universal installer or manifest of its own.
 
+Run `task test` to validate the consolidated Ruby router, consulting skill inventory, attribution, links, frontmatter, portability, and Markdown formatting.
+
 ## Related Repos
 
 - [`angie/agentic-setup`](https://github.com/angie/agentic-setup): a full personal agent environment with vendoring, manifest-driven sync, and personal overrides; it explicitly vendors `damacus/agent-skills` as an opt-in upstream for `retro`
@@ -49,7 +55,7 @@ This repo does not currently include a universal installer or manifest of its ow
 
 ## Provenance
 
-Several skills in this repo were imported or adapted from other public repositories. The current local lockfile references these sources:
+Several skills in this repo were imported or adapted from other public repositories. Their lockfile records, documentation, and licences reference these sources:
 
 - [`anthropics/skills`](https://github.com/anthropics/skills)
 - [`vercel-labs/skills`](https://github.com/vercel-labs/skills)
@@ -59,5 +65,6 @@ Several skills in this repo were imported or adapted from other public repositor
 - [`nicolaischmid/agent-skills`](https://github.com/nicolaischmid/agent-skills)
 - [`markpitt/claude-skills`](https://github.com/markpitt/claude-skills)
 - [`jeffallan/claude-skills`](https://github.com/jeffallan/claude-skills)
+- [`thoughtbot/rails-consultant`](https://github.com/thoughtbot/rails-consultant)
 
 If you want stricter attribution, the next useful step would be adding per-skill provenance metadata or a small generated table from [`.skill-lock.json`](./.skill-lock.json).
