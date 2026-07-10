@@ -128,51 +128,6 @@
       "installedAt": "2026-05-20T14:02:51.840Z",
       "updatedAt": "2026-05-20T14:02:51.840Z"
     },
-    "postgresql-rails-analyzer": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/engineering/postgresql-rails-analyzer/SKILL.md",
-      "skillFolderHash": "105742e618af3a11705d6900dc18d1941c8844ee",
-      "installedAt": "2026-05-20T14:02:51.843Z",
-      "updatedAt": "2026-05-20T14:02:51.843Z"
-    },
-    "review-ruby-code": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/engineering/review-ruby-code/SKILL.md",
-      "skillFolderHash": "75e963da893826dcde93eddc9909ea7f4030360b",
-      "installedAt": "2026-05-20T14:02:51.844Z",
-      "updatedAt": "2026-05-20T14:02:51.844Z"
-    },
-    "sandi-metz-reviewer": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/engineering/sandi-metz-reviewer/SKILL.md",
-      "skillFolderHash": "3f7ef551930f7357cee108f83a4a97fc24dc5a44",
-      "installedAt": "2026-05-20T14:02:51.845Z",
-      "updatedAt": "2026-05-20T14:02:51.845Z"
-    },
-    "simplecov": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/engineering/simplecov/SKILL.md",
-      "skillFolderHash": "0d87ea17833bfee0a6d05f308542ca3abffe8538",
-      "installedAt": "2026-05-20T14:02:51.846Z",
-      "updatedAt": "2026-05-20T14:02:51.846Z"
-    },
-    "design-patterns-ruby": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/design-patterns-ruby/SKILL.md",
-      "skillFolderHash": "33da35dbbbe301d86faac80c334720c97a2ae600",
-      "installedAt": "2026-05-20T14:02:51.846Z",
-      "updatedAt": "2026-05-20T14:02:51.846Z"
-    },
     "fish-shell": {
       "source": "damacus/skills",
       "sourceType": "github",
@@ -181,60 +136,6 @@
       "skillFolderHash": "6667e0aa3a68ddd375880ad994902d9625772664",
       "installedAt": "2026-05-20T14:02:51.846Z",
       "updatedAt": "2026-05-20T14:02:51.846Z"
-    },
-    "rails": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/rails/SKILL.md",
-      "skillFolderHash": "08cbe7acabf180b00a7658ae6d77f3f0298ab395",
-      "installedAt": "2026-05-20T14:02:51.847Z",
-      "updatedAt": "2026-05-20T14:02:51.847Z"
-    },
-    "rspec": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/rspec/SKILL.md",
-      "skillFolderHash": "2fa83e45dc835c1dce2828221db26e04ce277a1c",
-      "installedAt": "2026-05-20T14:02:51.848Z",
-      "updatedAt": "2026-05-20T14:02:51.848Z"
-    },
-    "rubocop": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/rubocop/SKILL.md",
-      "skillFolderHash": "c403e4920f8d2608d29ec9943d747ed438038de9",
-      "installedAt": "2026-05-20T14:02:51.849Z",
-      "updatedAt": "2026-05-20T14:02:51.849Z"
-    },
-    "ruby": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/ruby/SKILL.md",
-      "skillFolderHash": "d9b804588ff8fefa2ccb07d5a55e96d7cb060f71",
-      "installedAt": "2026-05-20T14:02:51.849Z",
-      "updatedAt": "2026-05-20T14:02:51.849Z"
-    },
-    "ruby-lsp": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/ruby-lsp/SKILL.md",
-      "skillFolderHash": "745062b77ed9a3571ec06792214565c3080f8ca9",
-      "installedAt": "2026-05-20T14:02:51.850Z",
-      "updatedAt": "2026-05-20T14:02:51.850Z"
-    },
-    "rubycritic": {
-      "source": "damacus/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/damacus/skills.git",
-      "skillPath": "skills/language/rubycritic/SKILL.md",
-      "skillFolderHash": "5cef4d342d28896c2e1973f1cc0030f330430e0e",
-      "installedAt": "2026-05-20T14:02:51.850Z",
-      "updatedAt": "2026-05-20T14:02:51.850Z"
     },
     "alert-investigator": {
       "source": "damacus/skills",
