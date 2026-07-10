@@ -1,0 +1,22 @@
+version: "3"
+
+tasks:
+  test:
+    desc: Validate the consolidated Ruby and consulting skills
+    cmds:
+      - >-
+        markdownlint-cli2
+        'skills/ruby/**/*.md'
+        'skills/challenge/**/*.md'
+        'skills/explain/**/*.md'
+        'skills/hard-news/**/*.md'
+        'skills/offboard/**/*.md'
+        'skills/prior-art/**/*.md'
+        'skills/rubber-duck/**/*.md'
+        'skills/slice/**/*.md'
+        'skills/socratic-review/**/*.md'
+        'skills/standup/**/*.md'
+        'skills/test-driven-development/**/*.md'
+      - ruby scripts/validate_skills.rb
+      - ruby -c skills/ruby/scripts/ruby_outline.rb
+      - git diff --check
