@@ -51,9 +51,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/operations/chef-custom-resources/SKILL.md",
-      "skillFolderHash": "2be68229e3c9cedd8a32d2c92978ff894dd87545",
+      "skillFolderHash": "fd690dfb42d178d6621d1b98f356053acc27fb09",
       "installedAt": "2026-05-20T14:02:51.851Z",
-      "updatedAt": "2026-07-14T12:10:33.765Z"
+      "updatedAt": "2026-08-20T09:10:36.159Z"
     },
     "cli-design": {
       "source": "damacus/skills",

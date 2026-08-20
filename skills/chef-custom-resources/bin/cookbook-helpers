@@ -552,7 +552,7 @@ function cmd_check_structure
     set -l exit_code 0
 
     # Required files
-    set -l required_files metadata.rb Berksfile kitchen.yml kitchen.dokken.yml chefignore README.md
+    set -l required_files metadata.rb Policyfile.rb AGENTS.md kitchen.yml kitchen.dokken.yml chefignore README.md
 
     for f in $required_files
         if test -f "$cookbook_dir/$f"
