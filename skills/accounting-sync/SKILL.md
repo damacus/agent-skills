@@ -1,20 +1,21 @@
 ---
 name: accounting-sync
-description: Synchronizes bank transactions from FreeAgent with invoices found in Gmail, uploads them to Paperless-ngx, and attaches them back to FreeAgent. Use this skill for weekly accounting maintenance or when the user asks to "sync invoices" or "connect FreeAgent and Paperless".
+description: Synchronizes bank transactions from FreeAgent with invoices found through Spark, uploads them to Paperless-ngx, and attaches them back to FreeAgent. Use this skill for weekly accounting maintenance or when the user asks to "sync invoices" or "connect FreeAgent and Paperless".
 ---
 
-# Accounting Sync: FreeAgent <-> Gmail <-> Paperless-ngx
+# Accounting Sync: FreeAgent <-> Spark <-> Paperless-ngx
 
 This skill automates the workflow of matching bank transactions with their corresponding invoices and ensuring they are archived in Paperless-ngx and linked in FreeAgent.
 
 ## Core Workflow
 
 ### 0. Mandatory Auth Preflight
-Run this before any dry-run or real-mode work. If either Gmail or FreeAgent is not authenticated, stop and report the blocker. Do not continue to Gmail searches, FreeAgent reads, Paperless checks, or local file staging.
+Run this before any dry-run or real-mode work. If either Spark or FreeAgent is unavailable, stop and report the blocker. Do not continue to mailbox searches, FreeAgent reads, Paperless checks, or local file staging.
 
-- `gws auth status`
-  - Required: exit code 0, `token_valid: true`, and usable credential encryption.
-  - If the sandbox cannot read keychain credentials but an escalated/keychain-capable check succeeds, note that future commands must use the same keychain-capable execution path.
+- `spark accounts`
+  - Required: Spark Desktop is running, CLI access is enabled, and the accounting-evidence account `dan.webb@damacus.io` (damacus.io) is listed.
+  - Optional: `dan.m.webb@gmail.com` (personal Gmail) and `daniel.webb@equalexperts.com` (EE) may be listed when their scoped workflows are needed; do not block routine accounting sync if either is absent.
+  - Run through keychain/network-capable execution when the sandbox cannot reach the Spark Desktop bridge.
 - `freeagent-cli auth status`
   - Required: exit code 0 and `expired=false`.
   - If the CLI reports `no tokens stored`, stop and ask the user to reauthenticate FreeAgent.
@@ -22,7 +23,7 @@ Run this before any dry-run or real-mode work. If either Gmail or FreeAgent is n
   - Required for real mode.
   - In dry-run mode, a Paperless failure may be reported as a Paperless-only blocker, but do not upload or attach anything.
 
-The auth preflight is step zero because partial runs create noise: Gmail-only or FreeAgent-only scans cannot prove whether an item is ready to sync.
+The auth preflight is step zero because partial runs create noise: mailbox-only or FreeAgent-only scans cannot prove whether an item is ready to sync.
 
 ### 1. Establish Run Mode and Date Window
 - Confirm whether the run is dry-run or real mode.
@@ -39,21 +40,22 @@ The auth preflight is step zero because partial runs create noise: Gmail-only or
   - `freeagent-cli --json bank list --bank-account BANK_ACCOUNT_URL --from YYYY-MM-DD --to YYYY-MM-DD --per-page 100`
   - `freeagent-cli --json bank review get BANK_TRANSACTION_URL`
 
-### 3. Search Gmail for Invoices
-- For each target transaction, use the vendor's `gmail_query` from `references/vendors.json`.
+### 3. Search Spark for Invoices
+- Use account-scoped Spark searches. The normal accounting-evidence account is `dan.webb@damacus.io`; do not search the personal Gmail account by default.
+- `dan.m.webb@gmail.com` (Gmail) is for personal mail and EE-Timesheet OTPs, not routine accounting evidence.
+- `daniel.webb@equalexperts.com` (EE) is for consultancy correspondence. Search it only when a transaction is clearly EE-related or the user asks for consultancy evidence.
+- For each target transaction, use the vendor's `gmail_query` from `references/vendors.json` as Spark's Gmail-style `--filter` value.
 - Match emails by date (within +/- 3 days) and amount (considering currency conversion if applicable).
 - Use a broad attachment search for the same window to catch vendors not yet in the config:
-  - `gws gmail +triage --format json --max 50 --query '(receipt OR invoice) has:attachment after:YYYY/MM/DD before:YYYY/MM/DD'`
+  - `spark search --in dan.webb@damacus.io --filter '(receipt OR invoice) has:attachment after:YYYY/MM/DD before:YYYY/MM/DD' --page-size 50`
 - Use vendor-specific searches for known vendors:
-  - `gws gmail +triage --format json --max 10 --query "from:vendor@example.com subject:invoice after:YYYY/MM/DD"`
+  - `spark search --in dan.webb@damacus.io --filter 'from:vendor@example.com subject:invoice after:YYYY/MM/DD' --page-size 10`
 
 ### 4. Extract and Validate PDFs
 - If a matching email has a PDF attachment:
-  - Read full message metadata to identify attachment IDs.
+  - Read the full thread to identify the attachment IDs: `spark thread MESSAGE_ID`.
   - Download only the business invoice or receipt PDF, not terms and conditions or marketing attachments.
-  - `gws gmail users messages get --params '{"userId":"me","id":"MSG_ID","format":"full"}' --format json`
-  - `gws gmail users messages attachments get --params '{"userId":"me","messageId":"MSG_ID","id":"ATTACH_ID"}' --format json`
-- If `gws` returns base64url JSON instead of writing a file, decode `.data` into a local PDF.
+  - `spark attachment ATTACHMENT_ID --stream > /Users/damacus/receipts/paperless/FILENAME.pdf`
 - Store staged PDFs under `/Users/damacus/receipts/paperless/` using the original invoice or receipt filename when possible.
 - Verify before upload or attachment:
   - `file /Users/damacus/receipts/paperless/FILENAME.pdf`

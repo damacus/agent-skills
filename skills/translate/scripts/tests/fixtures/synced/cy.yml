@@ -1,0 +1,7 @@
+---
+cy:
+  greeting:
+    hello: Helo, %{name}!
+    count:
+      one: Un neges
+      other: "%{count} neges"

@@ -1,6 +1,6 @@
 ---
 name: google-material-design
-description: Design interfaces following Google's Material Design system, the unified visual language bridging digital and physical worlds. Emphasizes bold graphic design, intentional motion, adaptive layouts, and the material metaphor. Use when building modern, accessible, delightful user interfaces across platforms.
+description: Design interfaces using Google's Material Design principles and motion. Use when building modern UI with Material patterns.
 tags: material-design, ui, ux, design-system, components, animation, accessibility, responsive, mobile, web, visual
 ---
 

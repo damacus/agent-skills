@@ -1,0 +1,4 @@
+interface:
+  display_name: "CLI Design"
+  short_description: "Design stable, composable command-line interfaces"
+  default_prompt: "Use $cli-design to review this command surface and propose a compatible, testable CLI contract."

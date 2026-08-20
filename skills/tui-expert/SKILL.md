@@ -1,39 +1,28 @@
 ---
 name: tui-expert
-description: Expert guidance for building professional, responsive, and beautiful Terminal User Interfaces (TUIs) in Rust (Ratatui) and Ruby (TTY, cli-ui). Covers architectural patterns (Conductor/Model/App), async client reuse, parallelisation, secure authentication, and modern visual aesthetics. Use when building, refactoring, or styling TUI applications in any language.
+description: >-
+  Design, build, review, or refine responsive Terminal User Interfaces (TUIs), especially Rust
+  Ratatui and Ruby TTY/cli-ui applications. Use for TUI state and event architecture, terminal
+  layout, navigation, keyboard and text-input behavior, async data loading, accessibility,
+  rendering, resizing, empty/error/loading states, or visual polish. When the product also exposes
+  scriptable commands, use cli-design alongside this skill for the CLI contract.
 ---
 
 # TUI Expert
 
-This skill provides the architectural and aesthetic foundation for building world-class TUIs and agent-first CLIs across Rust, Ruby, Go, and other ecosystems.
+This skill provides the architectural and interaction foundation for terminal user interfaces across Rust, Ruby, Go, and other ecosystems. It owns the interactive surface; the separate `cli-design` skill owns scriptable command contracts.
 
-## Unified CLI/TUI Command Surface
+## Compose the TUI with a CLI
 
-When a tool has both a CLI and a TUI, design the plain command as the first-class interface. The TUI is an explicit interactive mode, not the default path and not a replacement for a stable scriptable command surface.
+When a tool has both interfaces, load `cli-design` and keep them as sibling presentation adapters over shared application behavior.
 
-Use this command grammar for new tools:
+- Preserve an established bare-command TUI when compatibility requires it; for new automation-first tools, prefer an explicit `<tool> tui` entry.
+- Make important TUI reads and mutations available through documented non-interactive commands unless the operation is inherently visual or continuous.
+- Keep auth, configuration, validation, permissions, dry-run behavior, and result semantics consistent across both interfaces.
+- Keep rendering, keyboard state, and navigation out of the CLI layer; keep stdout/stderr formatting and pipe behavior out of the TUI state model.
+- Test parity for the same operation through the shared application layer, then test each adapter's terminal contract separately.
 
-1. `<tool>` starts the default agent-first interaction.
-2. `<tool> tui` starts the full TUI.
-3. `<tool> <resource> <verb>` runs stable scriptable commands.
-4. `<tool> raw` provides a break-glass escape hatch for API-backed tools.
-5. `<tool> auth`, `<tool> completion`, and `<tool> version` remain explicit support commands.
-
-For API-backed CLIs, organize resources around predictable verbs:
-
-- Use `list`, `get`, `create`, `update`, and `delete` for core CRUD.
-- Add domain verbs only when they match user intent better than CRUD, such as `send`, `approve`, `transition`, or `attach-receipt`.
-- Prefer positional IDs for `get`, `update`, and `delete`; accept full URLs when the domain naturally exposes resources as URLs.
-- Keep support commands separate from domain resources so agents and users can discover the command tree quickly.
-
-Do not make `--json` the hidden agent path or a compatibility alias. Define a first-class output contract:
-
-- Human terminal output defaults to readable tables, summaries, and confirmations.
-- Agent and automation calls use a documented structured output path, such as `--format json`, `--output json`, or an explicit agent mode.
-- Long-running jobs and event streams use newline-delimited JSON, such as `--format ndjson`, with one complete JSON object per line.
-- Structured output must be stable, documented, and covered by tests.
-
-For a FreeAgent-style CLI, this means top-level API resources such as `contacts`, `invoices`, `bank`, `bills`, `projects`, `tasks`, and `users`; support commands such as `auth`, `raw`, `completion`, and `version`; and domain workflows such as invoice `send`, bank `approve`, resource `transition`, and receipt attachment.
+Do not duplicate a domain-specific CLI tree here. Use the CLI skill to derive commands from the product's actual resources and workflows.
 
 ## Core Architectural Pattern: The "Orchestrated State"
 
@@ -46,10 +35,12 @@ Regardless of the language, modern TUIs follow a state-driven approach where the
 5. **UI/View:** Transforms the `App State` into terminal frames.
 
 ### Language-Specific Selection
+
 - **For Rust (Ratatui)**: Use the [rust_ratatui.md](references/rust_ratatui.md) for layout engine and widget patterns.
-- **For Ruby (TTY/cli-ui)**: See [ruby_tui.md](references/ruby_specific.md) for modular gems and framing patterns.
+- **For Ruby (TTY/cli-ui)**: See [ruby_specific.md](references/ruby_specific.md) for modular gems and framing patterns.
 
 ### Domain-Specific Patterns
+
 - **Monitoring (System/Network)**: See [monitoring.md](references/monitoring.md)
 - **Data & DB Management**: See [data_management.md](references/data_management.md)
 - **File Management**: See [file_management.md](references/file_management.md)
@@ -60,7 +51,7 @@ Regardless of the language, modern TUIs follow a state-driven approach where the
 1. **Research:** Understand the data source. TUIs are "windows into data".
 2. **Strategy:** Plan the layout segmentation (Header / Content / Status).
 3. **Act:** Build in layers: Data Client -> State Manager -> UI Components.
-4. **Validate:** Test resizing, edge cases (empty lists), and error states.
+4. **Validate:** Test resizing, narrow and non-UTF-8 terminals, keyboard-only use, text-entry focus, empty/loading/error states, and clean shutdown.
 
 ## Getting to "Good" Faster
 
@@ -93,16 +84,18 @@ Required behavior:
 - `Ctrl+C` or the configured emergency quit remains available even while editing text.
 - Tests must cover typing words that contain hotkey letters, such as `query`, `account`, and URL-like strings.
 
-## Global TUI Aesthetics (The "Beautiful TUI" Checklist)
+## Global TUI Aesthetics
 
-- [ ] **Gradients & Colour:** Use high-contrast gradients for titles. E.g., Light Blue to Purple.
+- [ ] **Colour:** Use a small semantic palette with sufficient contrast; remain understandable with `NO_COLOR`, limited colour, and monochrome terminals.
 - [ ] **Hotkey Discoverability:** Always show shortcut keys in brackets or a distinct colour (e.g., `[q] quit`).
-- [ ] **Icons & Symbols:** Use UTF-8 symbols (●, ✓, ✗, ⚠) to represent status without taking up much space.
+- [ ] **Icons & Symbols:** Use UTF-8 symbols only with a tested ASCII fallback and never as the sole status signal.
 - [ ] **Adaptive UI:** Collapse panels or switch views based on terminal width/height.
 - [ ] **Muted Meta:** Dim secondary data (timestamps, hashes) to reduce cognitive load.
 
-## Side-Quest: The Power of Colour
-Every top-tier TUI uses colour strategically. It's not just decoration; it's a **UI primitive** for:
+## Colour as a UI Primitive
+
+Use colour strategically without making it the only carrier of meaning:
+
 - **Status Perception:** Red/Yellow/Green for health.
 - **Hierarchy:** Highlighting the "active" item in a list with a distinct background.
 - **Focus:** Greying out inactive sections.

@@ -15,18 +15,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/operations/accounting-sync/SKILL.md",
-      "skillFolderHash": "b38b23d3f3d543e3e75dcdc1e57546b6a775f194",
+      "skillFolderHash": "570d4cb163f36a3474e9dd2ea51c86af533c33f7",
       "installedAt": "2026-05-20T13:59:07.127Z",
-      "updatedAt": "2026-07-14T12:10:33.762Z"
+      "updatedAt": "2026-08-17T08:08:54.730Z"
     },
     "adaptive-model-routing": {
       "source": "damacus/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/workflow/adaptive-model-routing/SKILL.md",
-      "skillFolderHash": "501f89b50a0da8420d5ccf7d3ffd68267a63661d",
+      "skillFolderHash": "12b19b13b621732d5cab134dcba87496ee2da7fd",
       "installedAt": "2026-07-14T12:10:33.764Z",
-      "updatedAt": "2026-07-14T12:10:33.764Z"
+      "updatedAt": "2026-08-20T08:51:36.579Z"
     },
     "alert-investigator": {
       "source": "damacus/skills",
@@ -51,18 +51,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/operations/chef-custom-resources/SKILL.md",
-      "skillFolderHash": "2be68229e3c9cedd8a32d2c92978ff894dd87545",
+      "skillFolderHash": "fd690dfb42d178d6621d1b98f356053acc27fb09",
       "installedAt": "2026-05-20T14:02:51.851Z",
-      "updatedAt": "2026-07-14T12:10:33.765Z"
+      "updatedAt": "2026-08-20T09:10:36.159Z"
     },
     "cli-design": {
       "source": "damacus/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/engineering/cli-design/SKILL.md",
-      "skillFolderHash": "dd17c003f620b60798e68a173af2a61917ba0ae6",
+      "skillFolderHash": "014b2f0368ca999f2b3a74abaedf5215cad14c5c",
       "installedAt": "2026-07-14T12:10:33.766Z",
-      "updatedAt": "2026-07-14T12:10:33.766Z"
+      "updatedAt": "2026-08-17T08:08:56.286Z"
     },
     "core-web-vitals": {
       "source": "addyosmani/web-quality-skills",
@@ -141,27 +141,27 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/samber/cc-skills-golang.git",
       "skillPath": "skills/golang-code-style/SKILL.md",
-      "skillFolderHash": "77a4f1448571cf897601b49ef6636bf2de6cf4d5",
+      "skillFolderHash": "22fb4807a19faee2955bd45b3eee737cfdeaed41",
       "installedAt": "2026-05-26T07:11:56.432Z",
-      "updatedAt": "2026-07-13T07:40:40.428Z"
+      "updatedAt": "2026-08-20T08:51:39.420Z"
     },
     "golang-design-patterns": {
       "source": "samber/cc-skills-golang",
       "sourceType": "github",
       "sourceUrl": "https://github.com/samber/cc-skills-golang.git",
       "skillPath": "skills/golang-design-patterns/SKILL.md",
-      "skillFolderHash": "96fcb3546dd8c8423b8d3f1abd3cade8f84ac5b9",
+      "skillFolderHash": "60d76ecfb2d79aedd68bc2abee13d8bc47e9754c",
       "installedAt": "2026-05-26T14:48:52.112Z",
-      "updatedAt": "2026-07-13T07:40:42.362Z"
+      "updatedAt": "2026-08-20T08:51:41.184Z"
     },
     "golang-patterns": {
       "source": "affaan-m/everything-claude-code",
       "sourceType": "github",
       "sourceUrl": "https://github.com/affaan-m/everything-claude-code.git",
       "skillPath": "skills/golang-patterns/SKILL.md",
-      "skillFolderHash": "d3b2837b96075d033530682c4fbca2dac690679a",
+      "skillFolderHash": "763d95fcd0915b066a537d63a8ee0a1a76b37aac",
       "installedAt": "2026-05-26T07:05:05.059Z",
-      "updatedAt": "2026-07-13T07:40:38.570Z"
+      "updatedAt": "2026-08-17T08:09:00.589Z"
     },
     "google-material-design": {
       "source": "copyleftdev/sk1llz",
@@ -204,9 +204,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/language/ruby/SKILL.md",
-      "skillFolderHash": "ad28cc9e34061301b21b80d6764ce05af4b01f69",
+      "skillFolderHash": "6d10f5491579bb86b3cfee0dbfb6028b5995a582",
       "installedAt": "2026-05-20T14:02:51.849Z",
-      "updatedAt": "2026-07-14T12:10:33.768Z"
+      "updatedAt": "2026-08-17T08:08:57.971Z"
     },
     "security-maintenance": {
       "source": "damacus/skills",
@@ -258,9 +258,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/obra/superpowers.git",
       "skillPath": "skills/subagent-driven-development/SKILL.md",
-      "skillFolderHash": "c2c349084c2bd52da9af12e4d65fc94181f284bb",
+      "skillFolderHash": "8133f2b10d4e71e73d867f2e2e365e0778ff0e4e",
       "installedAt": "2026-07-13T16:28:51.707Z",
-      "updatedAt": "2026-07-13T16:28:51.707Z"
+      "updatedAt": "2026-08-17T08:09:06.694Z"
     },
     "translate": {
       "source": "damacus/skills",
@@ -297,6 +297,16 @@
       "skillFolderHash": "a927159d150e7681018cfb1eebefa8a2c951c5fb",
       "installedAt": "2026-03-04T00:11:51.418Z",
       "updatedAt": "2026-05-20T14:00:01.733Z"
+    },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/productivity/grill-me/SKILL.md",
+      "skillFolderHash": "3df14e2d3a89459bf300614be9247e3ce74798f8",
+      "pluginName": "mattpocock-skills",
+      "installedAt": "2026-08-17T08:08:42.835Z",
+      "updatedAt": "2026-08-17T08:08:42.835Z"
     }
   },
   "dismissed": {
