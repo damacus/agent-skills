@@ -20,8 +20,7 @@ Always run ChefSpec tests with:
 chef exec rspec
 ```
 
-This uses the Chef Workstation embedded Ruby and gems, ensuring correct ChefSpec and Policyfile
-support.
+This uses the Chef Workstation embedded Ruby and gems, ensuring correct ChefSpec/Berkshelf versions.
 
 ## spec_helper.rb Setup
 
@@ -30,7 +29,7 @@ support.
 # frozen_string_literal: true
 
 require 'chefspec'
-require 'chefspec/policyfile'
+require 'chefspec/berkshelf'
 
 RSpec.configure do |config|
   config.color = true

@@ -1,0 +1,7 @@
+---
+en:
+  greeting:
+    hello: Hello, %{name}!
+    count:
+      one: One message
+      other: "%{count} messages"

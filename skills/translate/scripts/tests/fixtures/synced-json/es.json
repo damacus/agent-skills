@@ -1,0 +1,6 @@
+{
+  "greeting": {
+    "hello": "Hola",
+    "items": ["uno", "muchos"]
+  }
+}

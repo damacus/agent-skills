@@ -50,7 +50,7 @@
 │           ├── inspec.yml
 │           └── controls/
 │               └── smoke_spec.rb
-├── AGENTS.md                         # Research findings, limitations, and agent guidance
+├── AGENTS.md                         # Non-obvious implementation and support findings
 ├── Policyfile.rb
 ├── chefignore
 ├── kitchen.yml                       # Suites + Vagrant driver
@@ -100,7 +100,7 @@ Key rules:
 
 - `chef_version '>= 15.3'` minimum for `unified_mode` support
 - Only list platforms actually tested and supported
-- Cross-reference with `AGENTS.md` for vendor support, limitations, and implementation decisions
+- Cross-reference with `LIMITATIONS.md` for vendor support
 - Add `depends` for any cookbook dependencies
 
 ## Policyfile.rb
@@ -109,28 +109,14 @@ Key rules:
 # frozen_string_literal: true
 
 name '<cookbook>'
-default_source :supermarket
+default_source :chef_repo, '.'
 
-run_list 'test::default'
-
-cookbook '<cookbook>', path: '.'
-cookbook 'test', path: './test/cookbooks/test'
-
-Dir.entries('./test/cookbooks/test/recipes').select { |f| !File.directory? f }.each do |test|
-  test = test.delete_suffix('.rb')
-  named_run_list :"#{test}", "test::#{test}"
-end
+run_list 'test::smoke'
+cookbook 'test', path: 'test/cookbooks/test'
 ```
 
-Key rules:
-
-- Prefer `Policyfile.rb` over `Berksfile` for new custom-resource migrations and modernizations.
-- Remove stale `Berksfile` and Berkshelf references unless the repository has an explicit
-  compatibility reason to keep them.
-- Resolve dependencies with `chef install Policyfile.rb`.
-- Use `require 'chefspec/policyfile'` in ChefSpec setup.
-- Treat sous-chefs/lvm#304 as the reference pattern for replacing Berkshelf with Policyfiles during
-  custom-resource modernization.
+`Policyfile.lock.json` is generated test state. Add it to `.gitignore` and do not commit it.
+Chef and Test Kitchen must resolve the policy during each run.
 
 ## kitchen.yml
 
@@ -303,6 +289,7 @@ suite-specific Kitchen files.
 .rubocop_cache/
 *.swp
 *~
+Berksfile.lock
 Policyfile.lock.json
 spec/
 test/

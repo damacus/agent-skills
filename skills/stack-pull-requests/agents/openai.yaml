@@ -1,0 +1,6 @@
+interface:
+  display_name: "Stack Pull Requests"
+  short_description: "Choose and manage safe PR delivery topology"
+  default_prompt: >-
+    Use $stack-pull-requests to decide whether this work belongs in one PR, independent PRs, or a
+    hard- or flow-lineage stack, then define safe review, verification, revision, and merge gates.
