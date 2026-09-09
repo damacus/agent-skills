@@ -2,7 +2,7 @@
 name: adaptive-model-routing
 description: >-
   Choose and revise Codex model and reasoning effort for engineering work. Use
-  when deciding between Sol, Terra, and Luna; balancing judgment, cost, and
+  when deciding between Luna, Sol, Astra, and Terra; balancing judgment, cost, and
   latency; assigning end-to-end work or bounded subtasks; planning a model
   handoff; or escalating after uncertainty, risk, or failed attempts increase.
   Apply at the start of substantial work and whenever its shape changes.
@@ -49,28 +49,52 @@ not complexity by judgment.
   objective checks.
 - Use Luna `high` when the same conditions apply but implementation requires
   sustained reasoning or is substantially larger.
-- Use Terra `medium` for some discovery, unfamiliar code, local design
-  judgment, or unclear failure diagnosis.
-- Use Terra `high` for difficult but bounded implementation, refactoring, or
-  hypothesis-led debugging.
-- Use Sol `medium` for broad architecture, consequential ambiguity, high blast
-  radius, or sensitive decisions.
-- Increase Sol one effort level at a time when evidence shows that `medium` is
-  insufficient.
+- Use Sol `medium` for everyday judgement, discovery, local design, difficult
+  implementation, or unclear failure diagnosis.
+- Use Astra (`gpt-6-astra`) `medium` for exceptional ambiguity, complex
+  architecture, consequential decisions, or high-blast-radius review. Route
+  directly to Astra when warranted, or escalate from Sol.
+- Increase Sol or Astra one advertised effort level at a time only when
+  evidence shows that `medium` is insufficient.
+- Use Terra in place of Sol under low limits. Start at `medium`; use `high`
+  when needed for difficult but bounded work.
 
 Luna may own suitable work end to end. It does not require a Sol framing pass
-or a Terra or Sol review merely because it is Luna. Multi-file work may remain
+or a stronger-model review merely because it is Luna. Multi-file work may remain
 with Luna when the pattern and checks are clear. Prefer Luna aggressively when
 correctness is cheap to verify.
 
-Terra is the everyday judgment tier. Start there when the task cannot yet be
-reduced to mechanical or tightly specified execution. Escalate Luna to Terra
+Sol is the everyday judgement tier. Start there when the task cannot yet be
+reduced to mechanical or tightly specified execution. Escalate Luna to Sol
 when implementation exposes meaningful design choices, unfamiliar behavior,
 or ambiguous failures.
 
-Sol is for frontier judgment, not routine ceremony. When the task genuinely
-routes to Sol, start at `medium` and increase effort only when the evidence
-warrants it.
+Astra handles the hardest judgement. Terra has no normal middle-tier role;
+it substitutes for Sol under low limits and must escalate when the work
+exceeds its capability.
+
+### Usage Policy
+
+Check usage before substantial work and at routing or handoff decisions. Use
+the runtime's usage tool and applicable Codex windows in `rateLimitsByLimitId`;
+fall back to legacy `rateLimits` when applicable mapped data is unavailable.
+Exclude unrelated model-specific buckets. Remaining percent for each reported
+window is `max(0, min(100, 100 - usedPercent))`.
+
+- If any applicable window has **less than 10% remaining**, replace Sol with
+  Terra and ask before selecting or escalating to Astra. This applies to
+  independent review and availability fallbacks too.
+- At exactly 10% remaining, keep normal Luna → Sol → Astra routing.
+- Restore normal routing at the next routing decision when all reported
+  applicable windows have at least 10% remaining.
+- Missing or null usage data means unknown, not zero. If no applicable window
+  is known to be low, retain normal routing and disclose the unavailable
+  measurement. A known low window still triggers substitution when another
+  window is missing.
+
+Terra substitution is a conservation preference. Do not claim measured savings
+or separate allowances. If Terra is unavailable or insufficient, follow the
+reference's fallback rules; never silently select Astra under low limits.
 
 ### 3. Keep Ownership Proportionate
 
@@ -95,11 +119,12 @@ Independent review is driven by consequence and uncertainty, not model
 identity.
 
 - A Luna owner may run the checks and complete a low-risk task without
-  mandatory Terra or Sol review.
-- Use Terra for routine independent review when local judgment or unfamiliar
+  mandatory stronger-model review.
+- Use Sol (Terra under low limits) for routine review when local judgement or unfamiliar
   implementation makes a second pass worthwhile.
-- Use Sol for architecture, security, compatibility, destructive changes,
-  sensitive decisions, or whole-branch review with a high blast radius.
+- Use Astra for complex architecture, security, compatibility, destructive changes,
+  sensitive decisions, or whole-branch review with a high blast radius. Ask
+  before selecting Astra under low limits.
 - Inspect diffs and evidence directly whenever review is required; confidence
   statements are not verification.
 
@@ -124,8 +149,10 @@ Move up a tier, increase effort, or request review when:
 - Integration exposes conflicting edits or a cross-task architectural
   decision.
 
-Escalation normally means Luna to Terra, Terra to Sol, or one higher reasoning
-level. Do not jump straight to maximum effort when a smaller increase addresses
+Escalation normally means Luna to Sol, Sol to Astra, or one higher reasoning
+level. Under low limits, Terra replaces Sol; ask before escalating to Astra
+when Terra is insufficient. Do not jump to maximum effort when a smaller
+increase addresses
 the uncertainty. A stronger model may return the clarified task to Luna when
 the remaining work becomes bounded and objectively testable.
 
@@ -145,14 +172,17 @@ integration across workers. Delegation does not require the parent to be Sol.
 
 ## Anti-Patterns
 
-- Starting every substantial task with Sol, even at `medium`.
-- Starting Sol at `high` before evidence shows `medium` is insufficient.
+- Starting every substantial task with Sol or Astra, even at `medium`.
+- Starting Sol or Astra at `high` without evidence that `medium` is insufficient.
 - Treating Luna as mechanical-only when work is clear and objectively testable.
-- Requiring Terra or Sol to review every Luna result regardless of risk.
+- Requiring a stronger model to review every Luna result regardless of risk.
 - Choosing models solely by line count; a one-line authorization change can be
   high risk.
 - Keeping Luna after ambiguity, design judgment, or sensitive decisions emerge.
-- Using Terra merely because a change spans several files.
+- Using Terra as the normal middle tier or merely because work spans files.
+- Treating exactly 10% remaining as low, or missing usage as zero.
+- Selecting Astra under low limits without the user's approval.
+- Claiming measured Terra savings or a separate allowance without evidence.
 - Creating many agents for serial or overlapping work.
 - Treating escalation as failure rather than the response to new evidence.
 
@@ -160,10 +190,14 @@ integration across workers. Delegation does not require the parent to be Sol.
 
 - Was the initial model chosen from uncertainty, blast radius, and verification
   quality?
-- Did clear, low-risk work avoid an unnecessary Sol or Terra tax?
+- Did clear, low-risk work avoid unnecessary stronger-model overhead?
 - Was Luna allowed to own suitable substantial work end to end?
-- Did Terra take over when local judgment or unclear diagnosis emerged?
-- If Sol was needed, did it start at `medium` and increase only with evidence?
+- Did Sol take over for local judgement, with Terra only under low limits or
+  as an availability fallback?
+- Did Sol and Astra start at `medium` and increase only with evidence?
+- Was usage checked, with Terra replacing Sol strictly below 10% remaining?
+- Was Astra approved before selection under low limits, including for review?
+- Were missing usage data and unavailable models reported accurately?
 - Was independent review proportionate to risk rather than model identity?
 - Were escalation triggers acted on when the task changed shape?
 - Did the route remain worthwhile after latency, cost, briefing, and review
