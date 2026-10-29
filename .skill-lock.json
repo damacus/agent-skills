@@ -24,9 +24,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/workflow/adaptive-model-routing/SKILL.md",
-      "skillFolderHash": "12b19b13b621732d5cab134dcba87496ee2da7fd",
+      "skillFolderHash": "ca84e45fee09810debd7a77bacfa245062d791a6",
       "installedAt": "2026-07-14T12:10:33.764Z",
-      "updatedAt": "2026-08-20T08:51:36.579Z"
+      "updatedAt": "2026-10-29T15:40:35.799Z"
     },
     "alert-investigator": {
       "source": "damacus/skills",
@@ -195,9 +195,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/damacus/skills.git",
       "skillPath": "skills/workflow/retro/SKILL.md",
-      "skillFolderHash": "132ce6b7bad45e68b04fcea5b7517a2631c02228",
+      "skillFolderHash": "9001ad6a303c93ff556389a99aa1a8df7a8a4917",
       "installedAt": "2026-05-20T14:02:51.854Z",
-      "updatedAt": "2026-10-07T12:33:50.168Z"
+      "updatedAt": "2026-10-29T15:40:38.039Z"
     },
     "ruby": {
       "source": "damacus/skills",
@@ -222,9 +222,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/jeffallan/claude-skills.git",
       "skillPath": "skills/security-reviewer/SKILL.md",
-      "skillFolderHash": "05520e1fb849ab025e83dadfff16a5e86b5be321",
+      "skillFolderHash": "df1e4c188837b2fc6789f1ca5710cd6a4d04e8b4",
       "installedAt": "2026-02-20T14:32:12.886Z",
-      "updatedAt": "2026-10-06T16:12:09.404Z"
+      "updatedAt": "2026-10-29T15:40:39.979Z"
     },
     "slack-messaging": {
       "source": "anthropics/knowledge-work-plugins",
@@ -258,9 +258,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/obra/superpowers.git",
       "skillPath": "skills/subagent-driven-development/SKILL.md",
-      "skillFolderHash": "5d44ced88725298e847c62c67a726dcc29e20d00",
+      "skillFolderHash": "98c875856cf40765616a4565f09b437f0c58992b",
       "installedAt": "2026-07-13T16:28:51.707Z",
-      "updatedAt": "2026-10-06T16:12:10.867Z"
+      "updatedAt": "2026-10-29T15:40:41.451Z"
     },
     "translate": {
       "source": "damacus/skills",
@@ -323,10 +323,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "28aceb4c9567b985cb47f7db88cf23c9f33af8b8",
-      "pluginName": "mattpocock-skills",
+      "skillFolderHash": "f551b6e0d219fdda0b6abf277f8f915b3127d1e9",
       "installedAt": "2026-10-07T12:08:27.426Z",
-      "updatedAt": "2026-10-07T12:08:27.426Z"
+      "updatedAt": "2026-10-29T15:40:42.570Z"
     },
     "rust-testing": {
       "source": "affaan-m/ecc",

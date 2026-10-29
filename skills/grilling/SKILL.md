@@ -1,78 +1,30 @@
 ---
 name: grilling
-description: >-
-  Investigate a plan and question unresolved decisions until the affected scope
-  is understood. Use for grill, grill me, or an explicit request to challenge
-  assumptions. Require evidence of coverage before ending the interview.
+description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
 ---
 
-# Grilling
+Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
 
-Reach a shared understanding without making the owner reconstruct facts that
-the agent can discover. A short interview is sufficient only when the evidence
-is sufficient. Question count and a general "yes" do not establish completeness.
+Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
 
-## Investigate first
+Format a round like so:
 
-Read the request, existing decisions and relevant implementation. For an existing
-product, inspect the running behaviour and tests where available. Record facts,
-contradictions and unknowns in the existing brief. Keep assumptions labelled.
-Use authorised help only when it saves more than briefing and coordination cost.
+```
+❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
 
-For migration work, apply `migrate` to identify the areas that must be examined.
-For other work, identify the affected users, outcomes, constraints, dependencies,
-failure states and acceptance evidence. Mark irrelevant areas with a reason.
-Do not declare a question answered merely because the implementation seems easy.
+➡️ <your recommended answer>
 
-## Ask in rounds
+---
 
-Ask a small coherent group of questions whose prerequisites are known. Give each
-question a stable number, the evidence, your recommendation and its consequence.
-Explain the work or risk that the answer changes. Do not bundle independent
-decisions into a single yes/no question or word alternatives to invite agreement.
+❓ **Q2** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
 
-Wait for answers to decisions that block implementation. A yes applies only to
-the explicit question or listed agreement. Silence, a timeout or an unrelated
-answer is not approval. Reuse earlier answers unless evidence changes.
+➡️ <your recommended answer>
+```
 
-After each round, trace consequences before asking again. For example, permitting
-removal of the last carer also raises questions about creating a dependent with
-no carer, warnings and existing permissions. Investigate those effects; ask only
-where the existing application or an earlier answer does not settle them.
+Word each question so "yes" accepts your recommended answer.
 
-Do not invent a new product policy to fill an implementation gap. Do not ask
-about ordinary layout or behaviour already demonstrated by the reference app.
-Use plain language; the owner should not need to translate internal architecture.
+Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
 
-## Completion requires evidence
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent with a fresh context window to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
 
-Before ending, check each affected area:
-
-- What was inspected, and what does that evidence establish?
-- What must remain unchanged?
-- Which specific differences did the owner approve?
-- What contradictions or consequential unknowns remain?
-- How will execution demonstrate that the result meets the agreement?
-
-Summarise facts, approved decisions and unresolved items separately in the same
-brief. Include concrete examples where edge cases could change the outcome.
-Check the summary against the original objective, not just questions you asked.
-Ask the owner to confirm shared understanding before dependent implementation;
-existing explicit confirmation remains valid for unchanged scope.
-
-A broad approval does not approve unstated assumptions. Unresolved material
-decisions keep the affected work pending; independent work may continue.
-Do not keep questioning once the affected scope is evidenced and agreed.
-
-## Relationship to other skills
-
-`migrate` owns preservation evidence. `slice` decomposes an agreed outcome.
-`team-planning` assigns resources only when a team is needed.
-`adaptive-model-routing` owns model choice. This skill creates no standing team,
-recurring timer, extra report or permission to broaden the task.
-
-## Provenance
-
-This is the damacus revision of the previously installed `grilling` workflow.
-It retains rounds of dependent questions and replaces the implicit
-"all branches visited" judgement with an explicit evidence check.
+The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.
