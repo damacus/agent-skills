@@ -8,3 +8,7 @@ The Codex version keeps the bounded clarification workflow. It removes
 Claude-specific framing, long style checklists, and extra glossary-path detail.
 It adds an explicit ban on tool calls, repository changes, and new task work
 while clarifying an answer.
+
+The 2026-10-09 damacus revision permits a narrow local feedback record and focused
+communication retro on the second actual clarification failure. Ordinary
+clarification remains tool-free. External publication requires separate authority.

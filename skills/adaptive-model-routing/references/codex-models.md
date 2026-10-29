@@ -1,116 +1,122 @@
-# Codex Model Mapping
+# Runtime Model Families
 
-Use only model names and reasoning efforts advertised by the active runtime.
-Revalidate metadata at routing decisions. Never infer global availability from
-one task, account, or runtime. These roles are local routing preferences.
+Resolve roles against the model inventory advertised by the actual target tool
+and host at each routing decision. Family names below are policy labels, not
+API model identifiers. Never send an invented `sol-latest` or similar alias.
 
-## Model Roles
+| Family role | Use when |
+| --- | --- |
+| Latest permitted Luna | Clear, low-risk work with objective checks |
+| Latest permitted Sol | Discovery, design, implementation and diagnosis |
+| Latest permitted Astra | Exceptional ambiguity, architecture or consequence |
 
-- `gpt-5.6-luna`: clear, low-risk work with established patterns and objective
-  checks. May own implementation, verification, and completion end to end.
-- `gpt-5.6-sol`: everyday judgement, discovery, local design, difficult
-  implementation, unclear diagnosis, and routine independent review.
-- `gpt-6-astra`: exceptional ambiguity, complex architecture, consequential
-  decisions, and high-blast-radius review. Allow direct routing or escalation
-  from Sol when the work warrants it.
-- `gpt-5.6-terra`: substitute for Sol under low limits. It has no normal
-  middle-tier role. Escalate when the work exceeds its capability.
+## Excluded Models
 
-## Reasoning Effort
+- **Every Terra model**, regardless of generation, alias or availability.
+- **Sol 6.0**, including `gpt-6-sol`, `gpt-6.0-sol` and any alias or pinned
+  release whose underlying model is Sol 6.0.
+- Models labelled retired, deprecated, legacy, previous-generation or older.
+- Preview, experimental and beta releases are excluded by this stable-family
+  resolver.
 
-- Luna starts at `medium`; use `high` for sustained reasoning within clear,
-  low-risk boundaries with objective checks.
-- Sol and Astra start at `medium`. Increase one advertised level at a time
-  only when evidence shows the current effort is insufficient.
-- Terra starts at `medium` when substituting for Sol; use `high` when needed
-  for difficult but bounded implementation or diagnosis.
+These exclusions apply to normal routing, low-limit routing, reviews,
+fallbacks, inherited defaults and reuse of existing agents. Availability does
+not make an excluded model eligible. Never use an unverified alias to bypass
+the exclusions. If no permitted model can meet the task's quality requirement,
+report the routing blocker instead of silently selecting an older model.
 
-If a preferred effort is unavailable, use the closest suitable advertised
-effort and state the adjustment. Tune effort when the model fits the task;
-change models when the nature of the judgement changes. Do not use higher
-effort as a prestige setting.
+## Resolve the Latest Permitted Release
 
-## Usage Policy
+1. Read the target tool's current advertised model IDs, descriptions, release
+   status, versions, availability and supported/default reasoning efforts.
+   Do not use this document, a previous session, an old benchmark or another
+   host's inventory as a model registry.
+2. Filter out excluded and unavailable candidates. Retain the requested family.
+3. Prefer the newest stable generation/version within that family. Compare
+   version components numerically, never model strings lexicographically.
+   A later supported stable minor or major release replaces its predecessor
+   automatically; no change to this skill is required.
+4. Treat contradictory latest/version metadata or indistinguishable versions
+   as ambiguous. Resolve that metadata before selecting; do not guess a model ID.
+5. Pass the exact permitted ID returned by the resolver to the tool. A runtime
+   alias is usable only when its concrete target is advertised and verified;
+   prefer that concrete target so the exclusion check is explicit.
 
-Check usage before substantial work and at routing or handoff decisions using
-the runtime's usage tool. Prefer applicable Codex buckets from
-`rateLimitsByLimitId`; fall back to legacy `rateLimits` when applicable mapped
-data is unavailable. Inspect all reported applicable windows, including
-primary and secondary. Exclude unrelated model-specific buckets, such as a
-Spark-only bucket when routing Luna, Sol, Astra, and Terra.
-
-Compute remaining percent as `max(0, min(100, 100 - usedPercent))`. Missing or
-null values are unknown, not zero. Any known applicable window with **less
-than 10% remaining** triggers low-limit routing, even if another is unknown.
-
-- Below 10%: Terra replaces Sol. Ask before selecting or escalating to Astra,
-  including independent review and availability fallbacks.
-- Exactly 10% or above in every reported applicable window: normal routing.
-  Restore it at the next routing decision after limits recover.
-- No known low window and missing usage data: retain normal routing and
-  disclose the unavailable measurement. Do not invent a remaining percentage.
-
-This is a conservation preference, not evidence of measured Terra savings or
-separate model allowances. Do not consume usage-reset credits without explicit
-user authorisation.
-
-## Practical Routing Sequence
+The deterministic helper accepts a JSON inventory on stdin:
 
 ```text
-Clear + low risk + objective checks
-    -> Luna medium/high: own, implement, verify, finish
-
-Everyday judgement, discovery, local design, or difficult implementation
-    -> Sol medium: clarify, implement, review, or return work to Luna
-    -> Terra medium/high instead when any applicable window is below 10%
-
-Exceptional ambiguity, complex architecture, or consequential decisions
-    -> Astra medium: route directly or escalate from Sol
-    -> Ask before selecting Astra when any applicable window is below 10%
+python3 scripts/resolve_model.py --family sol
 ```
 
-No tier is required at both ends of every task. Review follows consequence and
-uncertainty; Luna does not require a stronger reviewer solely because it is
-Luna. Increase effort or escalate when evidence warrants it, and return work
-to Luna when the remaining scope is clear and objectively testable.
+Its input is `{"models": [...]}`. Each entry requires an advertised `id` and
+may include `description`, `status`, `available`, `is_latest`,
+`default_reasoning_effort` and `supported_reasoning_efforts`. Copy these fields
+from current runtime metadata; do not invent availability, versions or defaults.
+The helper supports canonical numeric GPT family IDs. Other naming schemes
+require verified canonical metadata and a resolver update, not an assumed match.
 
-## Availability Fallback
+Before using an explicit or inherited ID, check it against the same inventory:
 
-- If Luna is unavailable, use Sol, or Terra under low limits, at a suitable
-  advertised effort.
-- If Sol is unavailable under normal limits, Terra may handle work within its
-  capability as an availability fallback. Use Astra when the task needs it.
-- If Terra is unavailable or insufficient under low limits, use Sol only if
-  available and capable, and disclose that the conservation preference could
-  not be followed. If Astra is needed, ask before selecting it.
-- If Astra is unavailable, use Sol only when it can reliably own the work
-  (Terra under low limits). Otherwise explain the capability gap and seek a
-  scope or availability decision; do not silently lower the required standard.
-- If no suitable model is available, report the limitation. Keep scope,
-  permissions, and acceptance criteria unchanged through every fallback.
+```text
+python3 scripts/resolve_model.py --check-model ACTUAL_ADVERTISED_MODEL_ID
+```
 
-## Routing Walkthroughs
+The helper rejects excluded IDs and permitted-but-outdated versions. It returns
+no replacement model on failure. It does not invoke models, alter account
+limits, consume resets or change any running agent.
 
-| Situation | Route |
-| --- | --- |
-| Clear, low-risk work with objective checks | Luna medium/high |
-| Local design; 40% remains | Sol medium |
-| Complex architecture; 40% remains | Astra medium, directly if warranted |
-| Local design; exactly 10% remains | Sol medium |
-| Local design; 9.9% remains | Terra medium |
-| Consequential decision; 9.9% remains | Ask before Astra |
-| Applicable windows show 50% and 9% | Low-limit routing |
-| Codex shows 50%; unrelated Spark bucket shows 1% | Normal routing |
-| One window at 9%; another unknown | Low limits; disclose missing data |
-| All applicable usage is unavailable | Normal routing; disclose missing data |
-| Limits recover from 9% to 10% | Restore normal routing at next decision |
-| Terra unavailable; low limits | Suitable Sol; disclose, or ask before Astra |
-| Astra unavailable; Sol insufficient | Explain gap; seek a decision |
+If model discovery is unavailable, report that latest resolution is unverified.
+Do not silently fall back to a remembered identifier or to inheritance from an
+unverified parent. Continue independent authorised work where possible.
 
-## Runtime Reference
+## Reasoning Defaults and Tool Semantics
 
-Codex exposes model metadata, including supported reasoning efforts. Use the
-active runtime's advertised options rather than a fixed global model list.
-The role assignments and 10% threshold above are user preferences.
+Use the selected permitted model's current advertised default unless the owner
+chooses otherwise or evidence warrants an adjustment. Do not retain a dated
+snapshot of model defaults in this skill. Missing effort metadata is unknown.
 
-- [Codex model metadata API](https://github.com/openai/codex/blob/main/sdk/python/docs/api-reference.md)
+- Some tools inherit both the parent's model and effort when omitted. Omit
+  model only after verifying that the parent is the resolved latest permitted
+  model for the chosen role. Verify the effort separately.
+- When selecting a different model, follow the tool's fork constraints and
+  pass the resolved exact ID. Use its advertised default effort if omission
+  would inherit an unrelated value.
+- Existing agents retain their selected model. Check before reusing them;
+  do not send new work to an excluded or superseded model. A permitted switch
+  or replacement requires the normal task/delegation authority.
+- If the tool cannot switch a model and replacement is not authorised, report
+  the limitation. Updating this skill does not retrofit running agents.
+
+## Value, Usage and Fallbacks
+
+Optimise the total cost of a verified result while preserving quality. Model
+family roles guide initial judgement; actual current-version evidence should
+inform cost/performance comparisons. Do not transfer a predecessor's pricing,
+benchmarks or default effort to its successor. Consult current primary sources
+when a routing choice depends on those figures.
+
+Apply the main skill's usage policy to every model decision. Below 10% in any
+applicable allowance window, conserve usage and ask before Astra. Exactly 10%
+uses normal routing; missing usage is unknown. API prices do not establish
+Codex allowance consumption or separate model allowances.
+
+- Luna unavailable: use latest permitted Sol when suitable; Astra only when
+  required or the only suitable family, subject to the low-limit approval rule.
+- Sol unavailable: use latest permitted Luna only when quality remains adequate;
+  otherwise use latest permitted Astra, subject to the same approval rule.
+- Astra unavailable: use latest permitted Sol only when it can reliably meet
+  the requirement. Otherwise explain the capability gap.
+- No suitable permitted model: report the blocker. Exclusions stay in force.
+
+Changing family, effort or ownership does not itself authorise delegation,
+external messages, another task, or a change to running sessions.
+
+## Service Tier Evidence
+
+Normal service is the default for every family, especially Astra. Select the
+recorded `default` tier; `priority` means Fast and requires explicit approval for
+the specific work. Inspect tool capabilities before dispatch. A priority-only
+tool cannot satisfy normal routing; do not launch an agent through it silently.
+Verify `thread_settings_applied.thread_settings.service_tier` after dispatch.
+Missing settings remain unknown. Global `service_tier = "default"` is a new-session
+default and cannot prove or change an existing session tier.

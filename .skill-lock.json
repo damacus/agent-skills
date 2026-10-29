@@ -6,9 +6,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/accessibility/SKILL.md",
-      "skillFolderHash": "abdb452337317f5840e4298e46ad07663342dbe8",
+      "skillFolderHash": "90b7b38a892c625d19408df411e46cca7ff3819d",
       "installedAt": "2026-03-04T00:12:32.983Z",
-      "updatedAt": "2026-05-20T14:00:03.415Z"
+      "updatedAt": "2026-10-06T16:12:00.214Z"
     },
     "accounting-sync": {
       "source": "damacus/skills",
@@ -42,9 +42,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/best-practices/SKILL.md",
-      "skillFolderHash": "31953d33750e2be4444cf4f0bb8b2fd386116d50",
+      "skillFolderHash": "3f87de92fa71fc2e9741e6890fd991e8308db191",
       "installedAt": "2026-03-04T00:13:59.738Z",
-      "updatedAt": "2026-05-20T14:00:07.364Z"
+      "updatedAt": "2026-10-06T16:12:01.749Z"
     },
     "chef-custom-resources": {
       "source": "damacus/skills",
@@ -69,9 +69,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/core-web-vitals/SKILL.md",
-      "skillFolderHash": "041da568684b2b15ccb8789253dd2df29c8de433",
+      "skillFolderHash": "79f9fe00ddd0855b35e7498e3752c6d02304eb65",
       "installedAt": "2026-03-04T00:13:03.141Z",
-      "updatedAt": "2026-05-20T14:00:05.964Z"
+      "updatedAt": "2026-10-06T16:12:03.101Z"
     },
     "doc-coauthoring": {
       "source": "anthropics/skills",
@@ -150,9 +150,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/samber/cc-skills-golang.git",
       "skillPath": "skills/golang-design-patterns/SKILL.md",
-      "skillFolderHash": "60d76ecfb2d79aedd68bc2abee13d8bc47e9754c",
+      "skillFolderHash": "fb87c71aa1f81e500a8ddf852e0c1bcc10d546e8",
       "installedAt": "2026-05-26T14:48:52.112Z",
-      "updatedAt": "2026-08-20T08:51:41.184Z"
+      "updatedAt": "2026-10-06T16:12:06.503Z"
     },
     "golang-patterns": {
       "source": "affaan-m/everything-claude-code",
@@ -186,9 +186,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/microsoft/playwright-cli.git",
       "skillPath": "skills/playwright-cli/SKILL.md",
-      "skillFolderHash": "ef9a12fdadfb2ad4b67d512a10e840979f162c3a",
+      "skillFolderHash": "6b746b43751be277378e0ee04fe0db69f24da045",
       "installedAt": "2026-02-26T14:25:09.294Z",
-      "updatedAt": "2026-07-13T07:40:33.148Z"
+      "updatedAt": "2026-10-06T16:12:07.557Z"
     },
     "retro": {
       "source": "damacus/skills",
@@ -197,7 +197,7 @@
       "skillPath": "skills/workflow/retro/SKILL.md",
       "skillFolderHash": "132ce6b7bad45e68b04fcea5b7517a2631c02228",
       "installedAt": "2026-05-20T14:02:51.854Z",
-      "updatedAt": "2026-07-14T12:10:33.768Z"
+      "updatedAt": "2026-10-07T12:33:50.168Z"
     },
     "ruby": {
       "source": "damacus/skills",
@@ -222,9 +222,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/jeffallan/claude-skills.git",
       "skillPath": "skills/security-reviewer/SKILL.md",
-      "skillFolderHash": "4785ccbfb6ee8c2fdc9af3a2746c58b09da5d6a7",
+      "skillFolderHash": "05520e1fb849ab025e83dadfff16a5e86b5be321",
       "installedAt": "2026-02-20T14:32:12.886Z",
-      "updatedAt": "2026-05-20T13:59:58.601Z"
+      "updatedAt": "2026-10-06T16:12:09.404Z"
     },
     "slack-messaging": {
       "source": "anthropics/knowledge-work-plugins",
@@ -258,9 +258,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/obra/superpowers.git",
       "skillPath": "skills/subagent-driven-development/SKILL.md",
-      "skillFolderHash": "8133f2b10d4e71e73d867f2e2e365e0778ff0e4e",
+      "skillFolderHash": "5d44ced88725298e847c62c67a726dcc29e20d00",
       "installedAt": "2026-07-13T16:28:51.707Z",
-      "updatedAt": "2026-08-17T08:09:06.694Z"
+      "updatedAt": "2026-10-06T16:12:10.867Z"
     },
     "translate": {
       "source": "damacus/skills",
@@ -294,9 +294,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/web-quality-audit/SKILL.md",
-      "skillFolderHash": "a927159d150e7681018cfb1eebefa8a2c951c5fb",
+      "skillFolderHash": "a04a8ccbc301e12a7a4680886981db4955ebafbb",
       "installedAt": "2026-03-04T00:11:51.418Z",
-      "updatedAt": "2026-05-20T14:00:01.733Z"
+      "updatedAt": "2026-10-06T16:12:04.316Z"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -306,7 +306,45 @@
       "skillFolderHash": "3df14e2d3a89459bf300614be9247e3ce74798f8",
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-08-17T08:08:42.835Z",
-      "updatedAt": "2026-08-17T08:08:42.835Z"
+      "updatedAt": "2026-10-07T13:15:51.330Z"
+    },
+    "progress-report": {
+      "source": "damacus/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/damacus/skills.git",
+      "ref": "8894fa8a8db988d20b0953e42a75a78f97240a9b",
+      "skillPath": "skills/productivity/progress-report/SKILL.md",
+      "skillFolderHash": "9095908a0ea46d1fde25872e6bab25e985434086",
+      "installedAt": "2026-10-06T12:31:30.961Z",
+      "updatedAt": "2026-10-13T09:18:29.637Z"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/productivity/grilling/SKILL.md",
+      "skillFolderHash": "28aceb4c9567b985cb47f7db88cf23c9f33af8b8",
+      "pluginName": "mattpocock-skills",
+      "installedAt": "2026-10-07T12:08:27.426Z",
+      "updatedAt": "2026-10-07T12:08:27.426Z"
+    },
+    "rust-testing": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/affaan-m/ecc.git",
+      "skillPath": "skills/rust-testing/SKILL.md",
+      "skillFolderHash": "168d8a24ffec489070a6da1bf8af19716ba356bc",
+      "installedAt": "2026-10-13T10:20:26.034Z",
+      "updatedAt": "2026-10-13T10:20:26.034Z"
+    },
+    "macos-development": {
+      "source": "rshankras/claude-code-apple-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/rshankras/claude-code-apple-skills.git",
+      "skillPath": "skills/macos/SKILL.md",
+      "skillFolderHash": "b75d91acf7e22515e8a7a50aa5a725d743963dbd",
+      "installedAt": "2026-10-20T15:16:31.023Z",
+      "updatedAt": "2026-10-20T15:16:31.023Z"
     }
   },
   "dismissed": {
@@ -314,16 +352,17 @@
   },
   "lastSelectedAgents": [
     "amp",
-    "antigravity",
-    "antigravity-cli",
     "cline",
     "codex",
     "cursor",
-    "deepagents",
+    "droid",
+    "fx",
     "gemini-cli",
     "github-copilot",
+    "kilo",
     "kimi-code-cli",
     "opencode",
+    "pi",
     "warp",
     "zed"
   ]

@@ -1,116 +1,129 @@
 ---
 name: accounting-sync
-description: Synchronizes bank transactions from FreeAgent with invoices found through Spark, uploads them to Paperless-ngx, and attaches them back to FreeAgent. Use this skill for weekly accounting maintenance or when the user asks to "sync invoices" or "connect FreeAgent and Paperless".
+description: Use when reviewing or synchronising FreeAgent bank evidence with an account-specific mailbox and Paperless, including VAT checks, carry-over review items, dry runs, and approved item-level mutations.
 ---
 
-# Accounting Sync: FreeAgent <-> Spark <-> Paperless-ngx
+# Accounting Sync
 
-This skill automates the workflow of matching bank transactions with their corresponding invoices and ensuring they are archived in Paperless-ngx and linked in FreeAgent.
+Reconcile accounting evidence across a configured mailbox, Paperless-ngx, and FreeAgent. Keep account identities, vendor matching, tax treatment, and standing approvals outside this reusable skill.
 
-## Core Workflow
+## Policy Configuration
 
-### 0. Mandatory Auth Preflight
-Run this before any dry-run or real-mode work. If either Spark or FreeAgent is unavailable, stop and report the blocker. Do not continue to mailbox searches, FreeAgent reads, Paperless checks, or local file staging.
+Resolve the NDJSON policy file in this order:
 
-- `spark accounts`
-  - Required: Spark Desktop is running, CLI access is enabled, and the accounting-evidence account `dan.webb@damacus.io` (damacus.io) is listed.
-  - Optional: `dan.m.webb@gmail.com` (personal Gmail) and `daniel.webb@equalexperts.com` (EE) may be listed when their scoped workflows are needed; do not block routine accounting sync if either is absent.
-  - Run through keychain/network-capable execution when the sandbox cannot reach the Spark Desktop bridge.
-- `freeagent-cli auth status`
-  - Required: exit code 0 and `expired=false`.
-  - If the CLI reports `no tokens stored`, stop and ask the user to reauthenticate FreeAgent.
-- `paperless status`
-  - Required for real mode.
-  - In dry-run mode, a Paperless failure may be reported as a Paperless-only blocker, but do not upload or attach anything.
+1. A path explicitly supplied by the user or automation.
+2. `ACCOUNTING_SYNC_RULES`.
+3. `accounting/accounting-sync.ndjson` below the current working directory.
 
-The auth preflight is step zero because partial runs create noise: mailbox-only or FreeAgent-only scans cannot prove whether an item is ready to sync.
+If no policy file exists, reads and evidence classification may continue, but do not mutate anything. Report the missing policy as a blocker.
 
-### 1. Establish Run Mode and Date Window
-- Confirm whether the run is dry-run or real mode.
-- Use the requested window. If the user does not specify one, default to the past 7 days.
-- Record the exact window in the final report, for example `2026-04-16 through 2026-04-30`.
+Parse the entire file before contacting any service. Require:
 
-### 2. Identify Target Transactions
-- Query FreeAgent for unexplained or recently explained transactions in the date window.
-- Prefer the primary active business bank account unless the user specifies another account.
-- Reference `references/vendors.json` to filter transactions from known sources.
-- Include recently explained transactions with `has_attachment=false`; those are often the main sync targets.
-- Example:
-  - `freeagent-cli --json bank-accounts list`
-  - `freeagent-cli --json bank list --bank-account BANK_ACCOUNT_URL --from YYYY-MM-DD --to YYYY-MM-DD --per-page 100`
-  - `freeagent-cli --json bank review get BANK_TRANSACTION_URL`
+- one `settings` record with `schema_version: 1`;
+- unique non-empty IDs for every `approval_rule` and `exception_rule`;
+- only the record types `settings`, `approval_rule`, and `exception_rule`;
+- decimal money values encoded as strings;
+- each approval rule to define `match`, `expected`, `evidence`, and `auto_approve`;
+- each exception rule to use `action: "manual_review"`.
 
-### 3. Search Spark for Invoices
-- Use account-scoped Spark searches. The normal accounting-evidence account is `dan.webb@damacus.io`; do not search the personal Gmail account by default.
-- `dan.m.webb@gmail.com` (Gmail) is for personal mail and EE-Timesheet OTPs, not routine accounting evidence.
-- `daniel.webb@equalexperts.com` (EE) is for consultancy correspondence. Search it only when a transaction is clearly EE-related or the user asks for consultancy evidence.
-- For each target transaction, use the vendor's `gmail_query` from `references/vendors.json` as Spark's Gmail-style `--filter` value.
-- Match emails by date (within +/- 3 days) and amount (considering currency conversion if applicable).
-- Use a broad attachment search for the same window to catch vendors not yet in the config:
-  - `spark search --in dan.webb@damacus.io --filter '(receipt OR invoice) has:attachment after:YYYY/MM/DD before:YYYY/MM/DD' --page-size 50`
-- Use vendor-specific searches for known vendors:
-  - `spark search --in dan.webb@damacus.io --filter 'from:vendor@example.com subject:invoice after:YYYY/MM/DD' --page-size 10`
+Reject an invalid or ambiguous policy before any mutation. Never create or amend policy rules based only on a transaction observed during the current run.
 
-### 4. Extract and Validate PDFs
-- If a matching email has a PDF attachment:
-  - Read the full thread to identify the attachment IDs: `spark thread MESSAGE_ID`.
-  - Download only the business invoice or receipt PDF, not terms and conditions or marketing attachments.
-  - `spark attachment ATTACHMENT_ID --stream > /Users/damacus/receipts/paperless/FILENAME.pdf`
-- Store staged PDFs under `/Users/damacus/receipts/paperless/` using the original invoice or receipt filename when possible.
-- Verify before upload or attachment:
-  - `file /Users/damacus/receipts/paperless/FILENAME.pdf`
-  - Required: `PDF document`, expected file size, and the expected vendor amount visible in the email body or extracted text.
+The settings record supplies mailbox roles and Paperless metadata. It must not contain passwords, tokens, or other secrets. An approval rule is standing approval only when every configured matcher succeeds. An exception rule wins over an approval rule.
 
-### 5. Search Paperless Before Uploading
-- Search by invoice number, receipt number, vendor, and amount before uploading.
-- If Paperless already has the document, do not upload a duplicate; use the existing document as the archive evidence and continue to FreeAgent attachment if needed.
-- Examples:
-  - `paperless --output json search query 'AKD-736127147787'`
-  - `paperless --output json search query '2171 4358'`
+## Safety Contract
 
-### 6. Upload to Paperless
-- In real mode, upload the verified PDF with IDs resolved from the user's local Paperless instance.
-- Treat `references/vendors.json` as semantic configuration, not an ID registry:
-  - Use `default_paperless_profile` and `paperless_profiles` for shared user/work tags, such as `Work`.
-  - Use the vendor's `paperless_profile` to select those shared tags.
-  - Use `paperless_correspondent` for the document sender/vendor, falling back to `name` if it is absent.
-  - Use `paperless_tags` for vendor or domain tags, such as `anthropic`, `AI`, `DNS`, or `accounting`.
-  - Resolve every tag, correspondent, and document type name to the user's local Paperless IDs before upload.
-  - Do not assume numeric Paperless IDs are portable between users or instances.
-- Example:
-  - `paperless --output json document upload PDF_PATH --title 'TITLE' --type-id TYPE_ID --correspondent-id VENDOR_CORRESPONDENT_ID --tag-id YEAR_TAG_ID --tag-id PROFILE_TAG_ID --tag-id VENDOR_TAG_ID`
-- If Paperless returns `database is locked`, wait briefly and retry once. If the retry also fails, stop and report the Paperless blocker without re-attaching the same receipt again.
+- Default to dry-run unless the user explicitly requests real mode or the automation explicitly declares real mode.
+- Dry-run performs reads only. Do not download, create, upload, update tax, attach receipts, or approve review items.
+- Before an ad-hoc real run, name the exact items and proposed mutations. Approval is item-specific and does not cover newly found items.
+- In an explicitly real automation, an exact `auto_approve: true` policy match is standing item-specific approval. A rule never overrides dry-run mode.
+- In real mode, mutate one item, read it back, then reload the complete review list before continuing.
+- Never create missing Paperless metadata during a routine upload. Report it as a setup blocker.
 
-### 7. Link Back to FreeAgent
-- For an already explained transaction with no attachment, attach the verified PDF to the existing explanation.
-- Prefer the review helper over delete/re-create when available:
-  - `freeagent-cli --json bank review attach-receipt --explanation EXPLANATION_URL --file PDF_PATH --approve`
-- Only use delete/re-create when the helper is unavailable or the existing explanation cannot accept an attachment.
-- Never attach if amount, date, and vendor do not all match.
-- Never attach terms and conditions PDFs.
+## Preflight
 
-### 8. Post-Mutation Verification
-After each real-mode sync, verify both sides before reporting success:
+Use keychain and network-capable execution when required.
 
-- FreeAgent:
-  - `freeagent-cli --json bank review get BANK_TRANSACTION_URL`
-  - Required: `has_attachment=true`, expected filename, and `marked_for_review=false` if `--approve` was used.
-- Paperless:
-  - Search by invoice or receipt number.
-  - Required: one matching document and the expected title/content.
-- Final report:
-  - List synced items with transaction ID, explanation ID, Paperless document ID, and attachment filename.
-  - List skipped items and why they were skipped.
-  - List blockers separately from skipped non-target transactions.
+1. Resolve and validate the policy.
+2. Require `paperless >= 2.1.3` and `freeagent-cli >= 0.5.5`.
+3. Run `spark accounts`. Require the configured accounting mailbox. Use other configured mailboxes only for their declared roles.
+4. Run `freeagent-cli --json auth ensure --min-validity 15m`.
+5. Run compact `paperless --output json status`.
+6. In real mode, stop if any required system is unavailable. In dry-run, report a Paperless-only blocker but continue read-only FreeAgent and mailbox classification when those systems are healthy.
 
-## Vendor Configuration
-See [references/vendors.json](references/vendors.json) for the list of known vendors and their matching rules.
+## Scope
 
-## Security & Reliability
-- Auth preflight is mandatory in dry-run and real mode.
-- Always verify the amount, date, and vendor before attaching a document.
-- Always verify the staged file is a PDF before uploading or attaching.
-- Search Paperless before uploading to avoid duplicates.
-- Handle `database is locked` errors in Paperless by retrying once with a short delay.
-- Use dry-run mode to enumerate candidates only; do not stage partial evidence as a substitute for authentication.
-- In real mode, mutate one matched item at a time and verify it before moving to the next.
+Use the requested window or the last 7 days. Always list every outstanding FreeAgent item marked for review, including carry-over outside the window.
+
+Start with:
+
+```text
+freeagent-cli --json bank-accounts list
+freeagent-cli --json bank review list --bank-account BANK_ACCOUNT_URL --per-page 100
+```
+
+If the account summary reports outstanding review items but `bank review list` returns fewer, use `bank list --view marked_for_review` as a diagnostic fallback and report a CLI defect. Do not silently omit carry-over items.
+
+For every touched or remaining review item collect the transaction and explanation IDs, date, amount, vendor, category, `sales_tax_status`, `sales_tax_rate`, `sales_tax_value`, attachment state, and review state.
+
+## Rule Matching
+
+Evaluate exception rules first. For approval rules, require every populated matcher to agree, including direction, description or reference pattern, amount constraint, category, tax treatment, and evidence policy.
+
+- `amount_gbp.exact` must match exactly after decimal normalisation.
+- `amount_gbp.min` and `amount_gbp.max` are inclusive.
+- Regular expressions are applied only to their named fields.
+- `required_attachment` requires an exact document match before approval.
+- `required_text_regex` must match the exact supporting evidence, not a prior transaction.
+- `archive_if_available` allows approval without a document but keeps missing evidence in the backlog.
+- `invoice_match` requires an existing FreeAgent invoice match.
+- A category or tax mismatch is a proposed correction only when the rule explicitly specifies the expected value.
+
+If more than one approval rule matches, or an amount, category, tax field, or evidence requirement differs, stop and report the item for manual review.
+
+## Evidence Search
+
+Search each configured mailbox only for its declared role. Match vendor, amount, and plausible date. Search Paperless by invoice or receipt number, vendor, and amount before proposing an upload. Never attach a different charge's document, terms, or marketing material.
+
+Classify every candidate into exactly one bucket:
+
+1. **PDF-backed syncs**: exact PDF can be archived and attached.
+2. **Existing Paperless evidence**: exact document already exists.
+3. **Exact email-evidence approvals**: email body exactly supports approval but has no PDF.
+4. **Standalone archives**: valid business document has no matching bank item yet.
+5. **Review-only items**: operational or tax item can be reviewed without external evidence.
+6. **Portal evidence needed**: evidence exists only behind a vendor portal.
+7. **No-evidence items**: no reliable evidence found.
+
+## Paperless Metadata
+
+Use the correspondent, required tags, document type, and rule-specific vendor/domain tags from policy. Resolve names exactly and case-insensitively. Missing or ambiguous names block the item.
+
+```text
+paperless --output json document upload FILE --wait --timeout 60s --title TITLE --correspondent CORRESPONDENT --type TYPE --tag REQUIRED_TAG --tag VENDOR_TAG
+```
+
+Require the upload token, `SUCCESS` task status, and final document ID. If a successful upload omits the document ID, do not upload again. Find the document by its exact title and original filename, require exactly one match, and report the CLI defect. Read the document back and verify correspondent, type, title, and every tag. If Paperless processing overrides explicit metadata or adds an unwanted tag, correct the document to the exact policy metadata and read it back again before attaching it to FreeAgent.
+
+## Approved Mutations
+
+Combine only policy-approved receipt, tax, and review changes:
+
+```text
+freeagent-cli --json bank review update --explanation EXPLANATION_URL --file FILE --sales-tax-status STATUS --sales-tax-rate RATE --approve
+```
+
+Omit unapproved flags. Preserve all existing explanation fields. Never infer approval from a dry-run request.
+
+## Post-Sync Review
+
+After dry-run classification and after every real mutation, list category, tax status, tax rate, VAT value, evidence bucket, and tax confidence (`high`, `medium`, or `low`) for touched and remaining review items.
+
+Flag tax inconsistencies against exact evidence and equivalent prior entries. Do not certify a vendor's VAT from identity alone when the invoice is missing.
+
+Read back every update. Require requested tax fields and attachment filename to match, clear `marked_for_review` only when approved, and preserve category, date, gross value, description, project, and rebill fields.
+
+After every approval, reload the complete review list and compare it with the expected remaining IDs. If unrelated items disappear, stop further approvals, compare their update timestamps, and restore policy exceptions to review before continuing.
+
+## Report
+
+State the mode, window, policy path, preflight health, all seven evidence buckets, matched rule IDs, proposed or completed mutations, blockers, and post-sync review. Include transaction ID, explanation ID, Paperless document ID, and filename for completed syncs.

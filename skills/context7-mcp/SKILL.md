@@ -1,13 +1,15 @@
 ---
 name: context7-mcp
-description: Use Context7 to fetch current library and API docs. Use when you need setup help, code examples, or current docs.
+description: Fetch library and API docs with Context7 when Grounded Docs is unavailable or insufficient, or the user explicitly requests Context7.
 ---
 
-When the user asks about libraries, frameworks, or needs code examples, use Context7 to fetch current documentation instead of relying on training data.
+Prefer Grounded Docs through the configured LiteLLM MCP connection for documentation lookups. Use Context7 only when Grounded Docs is unavailable, lacks the required library/version, or cannot answer after a refined search and relevant page reads, or when the user explicitly requests Context7. Do not call Context7 as a second lookup when Grounded Docs already provides sufficient evidence.
+
+Follow the shared lookup policy in `/Users/damacus/.codex/context7.md`.
 
 ## When to Use This Skill
 
-Activate this skill when the user:
+When a fallback is needed, activate this skill for a user who:
 
 - Asks setup or configuration questions ("How do I configure Next.js middleware?")
 - Requests code involving libraries ("Write a Prisma query for...")

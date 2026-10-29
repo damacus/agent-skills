@@ -1,0 +1,34 @@
+{
+  "default": "standard",
+  "override_policy": "User arguments override these settings; record effective values outside the target repository. Preserve mandatory stages. Budgets are soft; never truncate silently.",
+  "mandatory_for_all": ["capability_discovery", "immutable_baseline", "mechanical_scan", "full_subjective_review", "blind_architecture", "native_tool_comparison", "source_verification", "false_positives_and_disagreements", "read_only_target"],
+  "profiles": {
+    "quick": {
+      "planning_minutes": 20,
+      "max_parallel_subjective_reviewers": 1,
+      "native_checks": "Existing fast lint/type/format checks; reuse valid same-snapshot test evidence or mark tests not run.",
+      "verification": "Verify all high-impact candidates and the leading candidates per dimension. List the rest as unverified.",
+      "architecture": "Trace one main product journey and its failure/cleanup path; assess all four required concerns.",
+      "subjective_coverage": "All generated dimensions and batches; no dimension pruning.",
+      "challenge": "Only unresolved high-impact disputes."
+    },
+    "standard": {
+      "planning_minutes": 60,
+      "max_parallel_subjective_reviewers": 2,
+      "native_checks": "Existing lint/type/format checks, relevant tests and configured dependency checks when available.",
+      "verification": "Verify every candidate proposed for action; retain unverified backlog separately.",
+      "architecture": "Trace main journeys across boundaries, state owners, abstractions, error propagation and test seams.",
+      "subjective_coverage": "All generated dimensions and batches, with caller and test inspection.",
+      "challenge": "Only unresolved high-impact disputes."
+    },
+    "deep": {
+      "planning_minutes": 120,
+      "max_parallel_subjective_reviewers": 3,
+      "native_checks": "Existing full local quality gates where safe; integration checks only with isolated fixtures and suitable authority.",
+      "verification": "Investigate every candidate, cross-module effects and representative counterexamples; disclose any unverified remainder.",
+      "architecture": "Trace product journeys, failure and concurrency paths, lifecycle ownership, public contracts and change history where available.",
+      "subjective_coverage": "All generated dimensions and batches with broader cross-module source and test coverage.",
+      "challenge": "Only unresolved high-impact disputes; deeper evidence gathering is not automatic escalation."
+    }
+  }
+}

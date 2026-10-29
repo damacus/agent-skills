@@ -1,56 +1,72 @@
 ---
 name: plain-technical-writing
 description: >-
-  Use when writing any user-facing answer, explanation, status update, plan,
-  instruction, review, or handoff that must be clear, direct, and easy to read.
+  Apply to every user-facing answer, explanation, status update, plan, review
+  and handoff. Make the result understandable on the first reading in plain UK
+  English, without requiring the user to invoke wtf.
 ---
 
 # Plain Technical Writing
 
-Write every user-facing response in clear, precise UK English. Use the useful
-principles of ASD-STE100 Simplified Technical English. Do not claim formal
-ASD-STE100 compliance. Formal compliance requires its controlled vocabulary
-and full writing rules.
+Write for the user's next decision or action. Lead with the answer or result.
+Use short connected paragraphs and concrete subjects. Preserve facts, conditions
+and uncertainty. Clarity matters more than squeezing the answer into fewer words.
 
-## Core Rules
+## Before sending
 
-- Use active voice.
-- Use short sentences where possible.
-- Put one main action in each sentence.
-- Put conditions, prerequisites, and warnings before the action they qualify.
-- Use one term for one concept. Keep file names, commands, values, and product
-  names exact.
-- Replace vague pronouns with the relevant subject.
-- Define an uncommon abbreviation or specialist term when it first appears.
-- Prefer common words. Keep technical words when simpler wording would reduce
-  accuracy.
-- State uncertainty directly. Do not hide it behind vague language.
+- Say what works, what does not, and what happens next when reporting progress.
+- Name the actual page, action, file or failure. Explain its practical effect.
+- Prefer active verbs and ordinary words. Keep necessary technical terms exact
+  and explain unfamiliar terms where they first matter.
+- Use one stable term for each thing. Replace ambiguous "it", "that" and "this".
+- Keep a qualification beside the claim it limits. Distinguish checked facts,
+  assumptions and recommendations; do not imply evidence you do not have.
+- Include commands, identifiers and internal details only when they help the
+  reader act or verify a claim. Put lengthy evidence behind a useful link.
+- Use lists or tables only for information that benefits from comparison.
+  Give a short direct answer when the question is simple.
 
-## Structure
+Avoid abstract bundles such as "contract hardening", "acceptance provenance" or
+"cross-slice boundary alignment" without saying what changes for the user.
+Avoid invented compound labels, slogans, canned contrasts and process narration.
+Do not use technical language to conceal a missing explanation.
 
-- Lead with the result or decision.
-- Use a short list only when it makes several actions or conditions clearer.
-- Keep related information together.
-- State what changed, how it was checked, and what remains when that matters.
-- Remove background detail that does not help the user decide or act.
+Before sending, read the first two sentences on their own. Can the user tell
+what the answer is and why it matters? Could a colleague unfamiliar with this
+thread understand it without requesting a glossary?
 
-## Do Not
+Do not narrate routine tool calls, agent coordination or checks unless they
+affect the result. Keep moving within authorised scope. Distinguish required
+checks from optional evidence; do not turn optional work into a blocker.
 
-- Use filler, jargon, idioms, slogans, or needless synonyms.
-- Use long noun phrases when a verb makes the action clearer.
-- State a conclusion before its condition or limitation.
-- Say a check passed when it did not run.
-- Simplify a safety, legal, financial, security, or technical condition until it
-  becomes inaccurate.
+## Pull requests
 
-## Final Check
+Use a Conventional Commit title that names the concrete outcome. Write for a
+reader who has not seen the conversation: explain the problem, resulting
+behaviour and important limits. Omit routine verification unless requested;
+include unusual manual evidence or a blocked check when it affects acceptance.
 
-- Can the user identify the result in the first sentence?
-- Does each sentence have one clear purpose?
-- Are all conditions and uncertainties explicit?
-- Did the response preserve the facts while removing unnecessary words?
+## Examples
+
+- Instead of "the candidate is gate-blocked on auth parity", say:
+  "The sign-in change is unfinished. Existing passkeys still fail."
+- Instead of "source-owned verification is locally green", say:
+  "The local tests passed. GitHub checks are still running."
+- Instead of "two integration gaps remain", name the gaps:
+  "Invitations still open the old form, and mobile sessions expire too late."
+
+## When the user cannot understand the answer
+
+Acknowledge the communication failure briefly and rewrite the answer with the
+same facts and uncertainty. Apply `wtf` when invoked or when the user explicitly
+asks for that clarification. Track repeated clarification requests using its
+session-level procedure; quoted trigger words do not count.
+
+Do not blame the user, praise a rewrite, or answer a different question.
+If explaining clearly reveals an unsupported assumption or reasoning error,
+correct it explicitly and reassess the affected work.
 
 ## Reference
 
-This skill is inspired by the clarity principles of
-[ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/).
+Use useful clarity principles from
+[ASD-STE100](https://www.asd-ste100.org/) without claiming formal compliance.

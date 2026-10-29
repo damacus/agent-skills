@@ -1,7 +1,7 @@
 ---
 name: retro
 description: "Retrospective on recent sessions - analyze patterns, improve skills/agents, capture learnings"
-argument-hint: "[last N | session-id | skill <skill-name>]"
+argument-hint: "[last N | session-id | skill <skill-name> | communication]"
 ---
 
 # Session Retrospective
@@ -27,6 +27,18 @@ Parse the arguments:
 - **`last N`** (where N is 2-5) → Analyze the N most recent sessions. Cap at 5, never analyze all.
 - **A UUID** → Analyze that specific session
 - **`skill <name>`** → Jump straight to improving a specific skill (skip to Phase 3 with that focus)
+
+## Focused communication retro
+
+When `wtf` invokes `communication`, inspect only the unclear answers and their
+corrections in the current session. Reuse its central incident record. Do not run
+the full session-discovery workflow below or demand a new questionnaire.
+
+Identify the concrete wording failure and whether evidence also shows lost scope,
+stale context or faulty reasoning. Give the corrected explanation, one likely
+cause and one recommended improvement. Ask one focused question if a decision is
+still needed. Preserve live jobs and existing authority. Do not edit other skills,
+publish the incident or save model memories automatically.
 
 ## Phase 1: Session Discovery & Analysis
 
@@ -114,7 +126,7 @@ For each skill or agent used in the session:
 
 This is the core of `/retro`. When the user identifies a skill to improve (or when invoked with `skill <name>`):
 
-1. **Read the current skill/agent/workflow file** (check all relevant locations, prioritizing the environment you are currently in):
+1. **Read the current skill/agent/workflow file** (check all relevant locations, starting with the authored source in damacus/skills):
    - environment-native skill directories
    - shared or user-managed skill directories
    - workflow/command directories
@@ -140,7 +152,9 @@ This is the core of `/retro`. When the user identifies a skill to improve (or wh
    - Ask if the user agrees before making changes.
    - Iterate: make one change, discuss, make the next.
 
-4. **When the user approves changes**, edit the skill file directly.
+4. **When the user approves changes**, edit the authored skill in `damacus/skills`,
+   validate it, then refresh its global installation. Never edit an installed copy
+   or add a competing project-local skill. Existing explicit approval remains valid.
 
 5. **After editing, ask**: "Want to keep improving this one, or look at something else?"
 

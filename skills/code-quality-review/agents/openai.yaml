@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Quality Review"
+  short_description: "Verify code quality with scans and independent review"
+  default_prompt: "Use $code-quality-review with the standard profile to review this repository read-only. Verify runtime model capabilities, preserve the baseline, complete Desloppify's mechanical and subjective reviews, compare native tooling, and report source-backed findings and disagreements."

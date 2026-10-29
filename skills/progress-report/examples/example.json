@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "project": "Example care application",
+  "report": "Migration progress \u00b7 illustrative example",
+  "headline": "Core care works; release rehearsal remains",
+  "summary": "Complete replay and the saved-state rehearsal before release.",
+  "snapshot_at": "2026-10-06T14:00:00+01:00",
+  "snapshot_timezone": "Europe/London",
+  "release_boundary": "The first release requires the application runner, sign-in, shared-care recording and a saved-state rollback rehearsal. Offline capture remains in the full goal and is deferred from this release.\n\nWhole-slice acceptance, merging and deployment remain visible in each checklist. Release approval also requires the completed rehearsal and an agreed operating plan.",
+  "limitations": "This is a fictional format example, not a live MedTracker status report. Evidence URLs are placeholders. The retained MedTracker HTML supplies the design reference only.\n\nThe first-release column counts its explicitly required items. It does not declare the release approved or deployed. Full-goal deferrals remain in the slice denominators.",
+  "slices": [
+    {
+      "id": "foundation",
+      "title": "Application foundation",
+      "acceptance": {
+        "status": "passed",
+        "evidence_ids": [
+          "foundation"
+        ]
+      },
+      "acceptance_criteria": "Run the replacement through its normal entry point and record independent acceptance of the published runner.",
+      "items": [
+        {
+          "id": "runner",
+          "title": "Start the replacement application",
+          "scope": "first-release",
+          "states": {
+            "implementation": {
+              "status": "complete",
+              "evidence_ids": [
+                "foundation"
+              ]
+            },
+            "local_checks": {
+              "status": "passed",
+              "evidence_ids": [
+                "foundation"
+              ]
+            },
+            "publication": {
+              "status": "published",
+              "evidence_ids": [
+                "foundation"
+              ]
+            },
+            "hosted_checks": {
+              "status": "passed",
+              "evidence_ids": [
+                "foundation"
+              ]
+            },
+            "acceptance": {
+              "status": "passed",
+              "evidence_ids": [
+                "foundation"
+              ]
+            },
+            "merge": {
+              "status": "merged",
+              "evidence_ids": [
+                "foundation"
+              ]
+            },
+            "deployment": {
+              "status": "not-deployed",
+              "evidence_ids": []
+            }
+          },
+          "works": "The normal entry point starts the replacement and serves its pages.",
+          "remaining": null,
+          "next_action": null
+        }
+      ]
+    },
+    {
+      "id": "care",
+      "title": "Sign-in and shared care",
+      "acceptance": {
+        "status": "pending",
+        "evidence_ids": []
+      },
+      "acceptance_criteria": "Accept all sign-in and care journeys, including withdrawn access, repeated requests and offline replay for the full goal.",
+      "items": [
+        {
+          "id": "sign-in",
+          "title": "Sign users in",
+          "scope": "first-release",
+          "states": {
+            "implementation": {
+              "status": "complete",
+              "evidence_ids": [
+                "accounts"
+              ]
+            },
+            "local_checks": {
+              "status": "passed",
+              "evidence_ids": [
+                "accounts"
+              ]
+            },
+            "publication": {
+              "status": "published",
+              "evidence_ids": [
+                "accounts"
+              ]
+            },
+            "hosted_checks": {
+              "status": "passed",
+              "evidence_ids": [
+                "accounts"
+              ]
+            },
+            "acceptance": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "merge": {
+              "status": "unmerged",
+              "evidence_ids": []
+            },
+            "deployment": {
+              "status": "not-deployed",
+              "evidence_ids": []
+            }
+          },
+          "works": "Users can sign in, recover access and end a session.",
+          "remaining": "Independent whole-slice acceptance remains.",
+          "next_action": "Include the published account journeys in the final care review."
+        },
+        {
+          "id": "care-record",
+          "title": "Record shared care activity",
+          "scope": "first-release",
+          "states": {
+            "implementation": {
+              "status": "complete",
+              "evidence_ids": [
+                "care"
+              ]
+            },
+            "local_checks": {
+              "status": "passed",
+              "evidence_ids": [
+                "care"
+              ]
+            },
+            "publication": {
+              "status": "published",
+              "evidence_ids": [
+                "care"
+              ]
+            },
+            "hosted_checks": {
+              "status": "pending",
+              "evidence_ids": [
+                "care"
+              ]
+            },
+            "acceptance": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "merge": {
+              "status": "unmerged",
+              "evidence_ids": []
+            },
+            "deployment": {
+              "status": "not-deployed",
+              "evidence_ids": []
+            }
+          },
+          "works": "Current members can record care activity; withdrawn members are denied.",
+          "remaining": "The hosted run for the published revision has not finished.",
+          "next_action": "Inspect the hosted result for example-care-02 and resolve any failures."
+        },
+        {
+          "id": "offline",
+          "title": "Capture care activity while offline",
+          "scope": "full-goal",
+          "states": {
+            "implementation": {
+              "status": "in-progress",
+              "evidence_ids": [
+                "offline"
+              ]
+            },
+            "local_checks": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "publication": {
+              "status": "unpublished",
+              "evidence_ids": []
+            },
+            "hosted_checks": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "acceptance": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "merge": {
+              "status": "unmerged",
+              "evidence_ids": []
+            },
+            "deployment": {
+              "status": "not-deployed",
+              "evidence_ids": []
+            }
+          },
+          "works": "A local draft stores activity while disconnected.",
+          "remaining": "Replay, conflict handling and withdrawn-access checks remain.",
+          "next_action": "Complete replay through the same authorised care operation."
+        }
+      ]
+    },
+    {
+      "id": "release",
+      "title": "Release and rollback",
+      "acceptance": {
+        "status": "pending",
+        "evidence_ids": []
+      },
+      "acceptance_criteria": "Restore independent saved data, run the existing application and record the complete release rehearsal.",
+      "items": [
+        {
+          "id": "restore",
+          "title": "Rehearse restoration of saved data",
+          "scope": "first-release",
+          "states": {
+            "implementation": {
+              "status": "not-started",
+              "evidence_ids": []
+            },
+            "local_checks": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "publication": {
+              "status": "unpublished",
+              "evidence_ids": []
+            },
+            "hosted_checks": {
+              "status": "not-required",
+              "evidence_ids": [
+                "rehearsal-scope"
+              ]
+            },
+            "acceptance": {
+              "status": "pending",
+              "evidence_ids": []
+            },
+            "merge": {
+              "status": "unmerged",
+              "evidence_ids": []
+            },
+            "deployment": {
+              "status": "not-deployed",
+              "evidence_ids": []
+            }
+          },
+          "works": null,
+          "remaining": "Restoration and operation on the saved state are unproved.",
+          "next_action": "Restore the agreed snapshot in an isolated environment and record the result."
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "foundation": {
+      "title": "Runner publication and acceptance",
+      "observed_at": "2026-10-06T10:00:00+01:00",
+      "revision": "example-foundation-01",
+      "source": "https://example.org/foundation",
+      "note": "Illustrative evidence for implementation, local and hosted checks, publication, acceptance and merging. No deployment is recorded."
+    },
+    "accounts": {
+      "title": "Published account journeys",
+      "observed_at": "2026-10-06T11:00:00+01:00",
+      "revision": "example-accounts-01",
+      "source": "https://example.org/accounts",
+      "note": "Illustrative evidence for implemented journeys, passing local and hosted checks and publication. Whole-slice acceptance remains pending."
+    },
+    "care": {
+      "title": "Published shared-care work with a pending hosted run",
+      "observed_at": "2026-10-06T13:00:00+01:00",
+      "revision": "example-care-02",
+      "source": "https://example.org/care",
+      "note": "Illustrative evidence for implementation, passing local checks, publication and a pending hosted run. This item earns no point yet."
+    },
+    "offline": {
+      "title": "Local offline draft",
+      "observed_at": "2026-10-06T13:30:00+01:00",
+      "revision": "example-offline-draft",
+      "source": "https://example.org/offline",
+      "note": "Illustrative in-progress implementation; no complete replay checks or publication."
+    },
+    "rehearsal-scope": {
+      "title": "Agreed restore rehearsal scope",
+      "observed_at": "2026-10-06T09:00:00+01:00",
+      "revision": "example-release-plan-01",
+      "source": "https://example.org/release-plan",
+      "note": "Hosted checks do not apply to this manually observed restore rehearsal. A published rehearsal record and passing local checks are still required."
+    }
+  }
+}

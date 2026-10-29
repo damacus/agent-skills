@@ -1,59 +1,73 @@
 ---
 name: wtf
 description: >-
-  Use when the user says "wtf", asks what a previous answer means, or says an
-  immediately preceding assistant response was unclear, dense, or hard to
-  follow.
+  Rewrite an unclear previous answer in plain UK English. Use for wtf or an
+  explicit complaint that the explanation is unreadable. On the second
+  occurrence in one session, record the failure and run a brief focused retro.
 disable-model-invocation: true
 ---
 
 # WTF
 
-Re-explain the immediately previous assistant response in plain, precise UK
-English. This is a clarification, not a new task.
+Explain the previous answer clearly first. Preserve its facts, constraints and
+uncertainty. If the previous answer is unavailable, ask for it instead of guessing.
 
-## Procedure
+## Clarify
 
-1. Read the immediately previous assistant response.
-2. Identify its conclusion, decisions, conditions, warnings, and any remaining
-   uncertainty.
-3. If a specialist term matters, look for the repository's relevant glossary or
-   context document. Use it only to preserve the term's meaning.
-4. Explain the same answer with clearer structure and simpler wording.
-5. Stop after the clarification.
+1. Identify the answer, practical consequence, remaining uncertainty and next step.
+2. Name concrete subjects and use ordinary words, following
+   `plain-technical-writing`. Explain necessary technical terms.
+3. Remove unnecessary process detail without concealing incomplete work.
+4. Correct an exposed factual or reasoning error explicitly rather than
+   preserving it for consistency.
 
-If the previous response is unavailable, ask the user to paste it. Do not guess
-at it.
+This is a clarification request, not permission to start adjacent implementation,
+change product scope or perform external actions.
+
+## Count actual clarification failures
+
+Count explicit user invocations or complaints about unclear assistant wording
+in this session. A pasted skill, quoted trigger, discussion of this policy or
+the same request repeated in a transcript summary does not count. Use turn or
+message IDs when available. Never infer missing occurrences.
+
+Retain the count and whether the focused retro ran in the session handoff.
+On the first occurrence, clarify and continue the existing task as appropriate.
+On the second, perform the procedure below. Later occurrences update the same
+incident; do not repeat a whole-session retrospective automatically.
+
+## Second occurrence: record and inspect
+
+Use the [central feedback procedure](references/communication-feedback.md).
+Record one sanitised incident in the skills source repository, not the project,
+installed skill directory or model memory. This procedure authorises that narrow
+local record when the skill is invoked; it does not authorise publication.
+
+Preserve live jobs and the current source checkpoint. Do not cancel a build,
+switch model or create a new thread just because the wording was poor.
+Run `retro` in its focused communication mode using the recent unclear answers
+and user corrections. Inspect for:
+
+- Jargon, missing subjects or excessive detail.
+- Stale context, contradictory decisions or lost scope.
+- Unsupported assumptions or inability to explain the actual failure.
+- Repeated attempts that require reassessment under `adaptive-model-routing`.
+
+Report the likely cause with evidence and distinguish communication from reasoning
+failure. Ask one focused question about the proposed improvement, with a concrete
+recommendation. Apply already-authorised corrections; wait for consequential
+scope, permission or preference decisions. Do not make the owner redesign the
+workflow or turn a wording failure into an expensive audit.
 
 ## Boundaries
 
-- Preserve technical facts, constraints, examples, values, and uncertainty.
-- Keep the explanation about the previous response. Do not answer a different
-  question that happens to be adjacent to it.
-- Do not browse, run commands, edit files, create plans, call tools, or start
-  work as part of the clarification.
-- Do not add information that the previous response did not contain.
-- Do not invent a glossary or introduce new terminology.
-
-## Writing Rules
-
-- Use active voice and plain UK English.
-- Put conditions and warnings before the action they qualify.
-- Use the same term for the same concept throughout.
-- Replace vague pronouns with the relevant file, command, component, or value.
-- Prefer short sentences and one main action per sentence.
-- Define an uncommon abbreviation when it first appears.
-- Prefer accurate wording over a shorter but ambiguous explanation.
-
-## Completion Check
-
-- Does this explain the previous response rather than continue the task?
-- Are its facts and uncertainty unchanged?
-- Is jargon defined or removed where possible?
-- Did this clarification make no external or filesystem change?
+Ordinary clarification needs no tools. On repeated failure, tools may read the
+relevant session evidence and write the narrow central incident only. Keep other
+work within its existing authority. Do not post transcripts, save model memories,
+edit skills, schedule retros or change permissions automatically.
 
 ## Attribution
 
-Adapted for Codex from Adam Bulmer's MIT-licensed `wtf` skill. This version
-adds Codex tool and mutation boundaries and removes Claude-specific framing.
+Adapted for Codex from Adam Bulmer's MIT-licensed `wtf` skill.
 See [source notes](references/source-notes.md) and [LICENSE](LICENSE).
+The damacus revision adds repeated-clarification feedback and a focused retro.

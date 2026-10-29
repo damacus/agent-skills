@@ -1,0 +1,30 @@
+.checklist th[scope="row"] { width: 36%; }
+.checklist td:nth-child(2) { width: 25%; }
+.checklist p { margin: 8px 0; }
+.delivery { font-size: 13px; }
+.delivery dt { font-weight: 650; }
+.delivery dd { margin: 4px 0 10px; }
+.delivery a { margin-left: 4px; }
+.delivery-details { border: 0; padding: 0; margin-top: 12px; }
+.delivery-details summary { font-size: 13px; }
+.slice-card { border: 1px solid var(--line); margin-top: 0; }
+.slice-card h2 { font-size: 27px; }
+.table-wrap th[scope="row"] { background: transparent; font-size: 15px; }
+.checklist p { overflow-wrap: anywhere; }
+.slice-card progress { display: block; margin: 16px 0; }
+@media (max-width: 760px) {
+  .slice-card h2 { font-size: 24px; }
+}
+@media print {
+  details { display: block; }
+  details > summary { display: none; }
+  .hero, .section, .summary, .evidence { break-inside: auto; }
+  .checklist tr, .acceptance { break-inside: avoid; }
+  .table-wrap { overflow: visible; }
+  table { font-size: 9pt; }
+  th, td { padding: 7px; }
+}
+
+.hero h1 {font-size:clamp(26px,3vw,36px);margin:8px 0 12px}.hero p{margin:8px 0}.slice-card{padding:24px}.slice-card details{margin-top:14px}.evidence li{overflow-wrap:anywhere}
+@media(max-width:760px){.checklist,.checklist tbody,.checklist tr,.checklist th,.checklist td{display:block;width:100%;min-width:0}.checklist thead{display:none}.checklist tr{border-bottom:2px solid var(--line);padding:12px 0}.checklist th,.checklist td{border:0;padding:6px 0}.checklist th[scope="row"],.checklist td:nth-child(2){width:100%}.navigation .links{max-height:220px;overflow:auto}}
+@media print{details::details-content{display:block}.navigation{display:none}}

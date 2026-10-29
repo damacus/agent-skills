@@ -38,7 +38,7 @@ Run GitHub CLI commands with elevated network access. Check `gh auth status` bef
 
 - Identify the repository's normal validation commands from its documented project contract, CI configuration, or task runner.
 - Run the relevant checks before publishing. For documentation-only work, use focused validation such as repository-provided linting plus `git diff --check` when no runtime test applies.
-- Report the exact commands and outcomes. Do not claim tests passed when they were not run.
+- Report the exact commands and outcomes in the task conversation, not the PR description. Do not claim tests passed when they were not run.
 - If required validation fails because of this change, fix it before publishing. If it is demonstrably pre-existing, report that evidence and ask whether to publish a draft PR.
 
 ### 5. Commit and push
@@ -56,12 +56,38 @@ Run GitHub CLI commands with elevated network access. Check `gh auth status` bef
   gh pr create --base main --head <branch> --title "<conventional subject>" --body "<PR body>"
   ```
 
-- Make the PR body useful to reviewers:
-  - `## Summary` with concise behavior-oriented changes.
-  - `## Verification` with exact commands and outcomes.
-  - `## Risks / follow-ups` only when applicable.
+- Write the title and body using the PR description style below.
+- Do not add a Verification, Testing, Test Plan, or CI Results section. Keep validation evidence in the task conversation.
+- Include upgrade instructions or breaking changes only when readers need to act on them.
 - Verify the created or existing PR with `gh pr view <number> --json number,url,state,isDraft,baseRefName,headRefName,title`.
 - Report the PR URL, branch, commit, base (`main`), validation results, and any known follow-up.
+
+## PR Description Style
+
+The title and opening paragraph must pass the **passer-by test**: could someone unfamiliar with the task understand what changed and why it matters?
+
+- Say what was added, removed, fixed or improved in simple terms.
+- Lead with the change users or maintainers will notice and why it helps them.
+- Prefer one short paragraph and a few concrete bullets. Use headings only when they help the reader.
+- Keep technical detail only when it is needed to understand the change or take an upgrade action. Explain necessary project terms; avoid internal implementation jargon.
+- Do not repeat anything CI measures or reports: test counts, pass/fail results, lint or formatting results, coverage, build status, check commands, job lists or routine validation checklists.
+- Omit branch synchronisation, merge-conflict resolution, commit hashes and the history of the work from the description.
+- State compatibility changes and required user actions clearly, without burying them in implementation details.
+- Read the title and opening paragraph on their own before publishing. Replace vague claims such as "modernise the architecture" with the actual improvement.
+
+Example:
+
+```markdown
+Makes removing HAProxy configuration safer and adds clearer setup instructions.
+
+* Adds a migration guide with examples for common setups.
+* Fixes installation on newer Linux releases.
+* Keeps unrelated configuration when removing an entry.
+
+## Upgrading
+
+Debian 12 or newer is now required. Removing a user list removes the whole list.
+```
 
 ## Write Safety
 
@@ -73,4 +99,4 @@ Run GitHub CLI commands with elevated network access. Check `gh auth status` bef
 
 ## Completion Criteria
 
-A publication request is complete only when the selected change is committed, pushed to its intended feature branch, represented by one verified PR against `main`, and accompanied by an accurate validation summary.
+A publication request is complete only when the selected change is committed, pushed to its intended feature branch, represented by one verified PR against `main`, and accompanied by an accurate validation summary in the task conversation. Keep CI-measured results out of the PR description.
